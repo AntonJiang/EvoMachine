@@ -1,0 +1,145 @@
+Evolution Based Learning
+	
+Logistics:
+	Load Model:
+		### Able to continue training
+	Save Model:
+		###
+	*** A way to pause and rewind training
+
+
+Algorithms:
+	ClockCycle:
+		### Controls the passage of time
+		-- kill cycle
+		-- produce_cycle
+
+	Units:
+		### Asexual
+		<<<
+		Base Survival Class
+		-- random_produce_prob
+		-- produce_variant_std
+		-- **neuron_args
+		Birth:
+			Natural:
+				Based on parent reproduce cycle 
+				Variant replica of parents
+			Accidental:	
+				Random Initiation of states
+		>>>
+		Death:
+			Unable to pass kill system
+			Randomly killed (Future)
+
+		Neuron Evolution Based
+			Semi-Stable Randomized Neuron Connection Generation
+			Neuron:
+				<<<
+				Connections:
+					-- Connection-From list
+					-- Connection weights list
+					-- Connection State list
+					-- Connection Function list
+					-- weight_counter
+					-- weight_trend
+					-- drop_rate
+				>>>
+				-- random_death_prob
+				-- natural_death_thresh
+				-- random_produce_prob
+				-- random_produce_mag
+				-- produce_variation_mag
+				-- produce_thresh
+				-- activation
+				Death:
+					Natural:
+						Weights approaches zero
+					Accident:
+						Random drop out -- probability(A)
+				<<<
+				Birth:
+					Natural:
+						While weight approaches threshold, grow new variantion
+							-- threshold(A) -- variantion_magnitude(A)
+					Accident:
+						Random growing -- probability(A)
+				>>>
+			Neuron Structure/Brain:
+				-- num_hidden
+				-- hidden_layer_produce_prob
+				Layers:
+					-- neuron_num		
+					-- (Connections) connections
+					-- pre_layer
+					-- next_layer
+
+				Input Layer:
+					-- drop_rate
+					-- type_list (U)
+				Hidden Layer:
+					Birth:
+						Randomly added at unit initiation
+					Death:
+						Randomly deleted at unit initiation
+				Output Layer:
+					-- type (U)
+
+		Extends: (Future)
+			Units with special features
+
+	Kill System:
+		### Pass in batches and kill units outside of prediction range
+
+		-- min_kill_range (A/U))
+			For each feature,	
+				Automatic find percentil range
+				Manually set range
+		-- kill_threshold (U)
+		-- batch_size (U)
+		Input:
+			batches
+		Compuatation:
+			Each unit produce batches results
+			Aggregate batch results
+		Output:
+			Issue out kill commands if reached threshold
+
+
+
+
+	Population Box
+		### List of population i.i.d among each other
+		-- population_list
+			Index region
+			Value population_size_lim
+			Value **population attributes
+			Value kill_system ?
+		-- population_size(U)
+
+
+*work on variety of neuron structure
+*visualization
+	find feature heavy weights
+	print neuron structures
+	animate population movements
+
+*automatic adjust kill range for kill system
+*god mode
+	diaster
+	adjust individual units
+	adjust population infomation
+	add new units
+
+
+Workflow:
+	*** data cleaning
+	Initialize Population
+	Initialize Units
+	Initialize Neurons
+
+	Feed training batches over serveral i.i.d shuffled epoch
+
+	Feature Refinement?
+
+	Test on voted with in population then voted among populations
