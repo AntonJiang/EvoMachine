@@ -7,6 +7,7 @@ import seaborn as sn
 import random
 import enum
 
+
 class LivingState(enum.Enum):
     DIE = -1
     NORM = 0
@@ -121,71 +122,3 @@ class Neuron():
         for func, value in zip(self.connections.get_functions):
             values.append(func(value))
         return self.activation(np.array(values).multiply(self.connections.get_weights() * self.connections.get_states()))
-
-class Layer():
-    def __init__(self, neurons, neuron_num, pre_layer, next_layer, additional_produce_std)
-        self.neurons = neurons # A list of existing neurons
-        self.neuron_num = neuron_num
-        self.pre_layer = pre_layer
-        self.next_layer = next_layer
-        self.additional_produce_std = additional_produce_std
-
-    def output(self, inputs):
-
-    def produce(self):
-        #Output New layers
-        produce_num = 1 + round(abs(np.random.default_rng().normal(0, self.additional_produce_std))/2)
-        for _ in range(produce_num):
-            new_neurons = [neuron.produce() for neuron in self.neurons]
- 
-class InputLayer(Layer):
-    def __init__(self, drop_rate, **kwargs):
-        self.drop_rate = drop_rate
-        super().__init__(**kwargs)
-        self.pre_layer = None
-
-class OutputLayer(Layer):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.next_layer = None
-
-class HiddenLayer(Layer):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-class Brain():
-    def __init__(self, num_hidden, hidden_layer_produce_prob):
-        self.num_hidden = num_hidden
-        self.hidden_layer_produce_prob = hidden_layer_produce_prob
-        return 0
-        
-    def predict(self, inputs):
-        # TODO: perform the calculations
-        return 0
-
-    def produce(self)
-
-class Unit():
-    def __init__(self,rand_produce_prob, produce_variant_std,neuron_info):
-        ### Bith of init
-        self.rand_produce_prob = rand_produce_prob
-        self.produce_variant_std = produce_variant_std
-        self.neuron_info = neuron_info
-        self.brain = self.create_brain()
-        return self
-    def create_brain(self):
-        # TODO: Initialize the brain
-        return 0
-    
-    def gen_random_brain(self):
-        # TODO: fully randomized brain states
-        return self.create_brain()
-    
-    def reproduce(self):
-        if (random.uniform(0,1) <= self.rand_produce_prob):
-            return self.gen_random_brain()
-        # TODO: variant of current brain states
-        return 0
-    
-    def predict(inputs):
-        return self.brain.predict(inputs)
