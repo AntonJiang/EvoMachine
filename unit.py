@@ -87,8 +87,8 @@ class Unit():
         """
         Produce a variant copy
         
-        Params:
-        
+        Args:
+            None
         Return:
             (Unit) : the variant copy
         """
