@@ -2,6 +2,7 @@ import numpy as np
 
 from evo_utils import KillSystem, ClockCycle, Pickle
 from population import Population
+from hyper import Hyperparam
 
 class EvoMachine(object):
 	""" docstring for EvoMachine
@@ -23,9 +24,11 @@ class EvoMachine(object):
 		self.populations = []
 		self.input_shape = input_shape
 		self.ouput_shape = ouput_shape
+		Hyperparam.input_shape = input_shape
+		Hyperparam.ouput_shape = ouput_shape
 		
 		for population in populations:
-			pop = Population(populations[0], populations[1], populations[2], input_shape, ouput_shape)
+			pop = Population(populations[0], populations[1], populations[2])
 			self.populations.append(pop)
 
 	def train(self, label, data):

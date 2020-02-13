@@ -7,48 +7,8 @@ import seaborn as sn
 import random
 import enum
 
-class Layer():
-    def __init__(self, neurons, neuron_num, pre_layer, next_layer, additional_produce_std)
-        self.neurons = neurons # A list of existing neurons
-        self.neuron_num = neuron_num
-        self.pre_layer = pre_layer
-        self.next_layer = next_layer
-        self.additional_produce_std = additional_produce_std
-
-    def output(self, inputs):
-
-    def produce(self):
-        #Output New layers
-        produce_num = 1 + round(abs(np.random.default_rng().normal(0, self.additional_produce_std))/2)
-        for _ in range(produce_num):
-            new_neurons = [neuron.produce() for neuron in self.neurons]
- 
-class InputLayer(Layer):
-    def __init__(self, drop_rate, **kwargs):
-        self.drop_rate = drop_rate
-        super().__init__(**kwargs)
-        self.pre_layer = None
-
-class OutputLayer(Layer):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.next_layer = None
-
-class HiddenLayer(Layer):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-class Brain():
-    def __init__(self, num_hidden, hidden_layer_produce_prob):
-        self.num_hidden = num_hidden
-        self.hidden_layer_produce_prob = hidden_layer_produce_prob
-        return 0
-        
-    def predict(self, inputs):
-        # TODO: perform the calculations
-        return 0
-
-    def produce(self)
+from hyper import Hyperparam
+from layer import InputLayer, OutputLayer, HiddenLayer
 
 class Unit():
     """
@@ -64,7 +24,9 @@ class Unit():
             connection_produce_prob (float) : the probability for one connection to produce
             connection_del_prob (float) : the probability for one connection to disappear
         meta_variant_magnitude (float) : the magnitude of how much all variables change
-        brain (Brain) : the NN layer structure
+        
+        num_hidden (int) : the number of hidden layers
+        num_neurons (list{int}) : a list of neuron in each hidden layer
 
     TODOs:
         Must:
@@ -76,16 +38,26 @@ class Unit():
     def __init__(self, weight_variant_magnitude, probabilities, meta_variant_magnitude):
         assert weight_variant_magnitude <= 1 and weight_variant_magnitude >= 0
         self.weight_variant_magnitude = weight_variant_magnitude
-        self.probabilities = probabilities
         self.meta_variant_magnitude = meta_variant_magnitude
-        self.brain = self.create_brain(?)
 
-    def create_brain(?):
-        return 0
+        self.num_hidden = np.round(np.random.default_rng().normal(0, meta_variant_magnitude, size=1) + Hyperparam.unit_base_hidden_layer)
+        self.num_neurons = np.round(np.random.default_rng().normal(0, meta_variant_magnitude, size=num_hidden) + Hyperparam.unit_base_layer_neuron)
+        self.input_shape = Hyperparam.input_shape
+        self.output_shape = Hyperparam.output_shape
+        self.layers = [InputLayer(Hyperparam.input_layer_drop_rate, _product(input_shape), a)]
+        temp_pre_layer = layers[0]
+        for i in range(num_hidden):
+            temp_pre_layer = HiddenLayer(num_neurons[i], pre_layer=temp_pre_layer)
+
+    def _product(list):
+        p = 1
+        for i in list:
+            p *= i
+        return p
 
     def reproduce(self):
         """
-        Produce a variant copy
+        Produce a single variant copy
         
         Args:
             None
@@ -94,8 +66,13 @@ class Unit():
         """
         return 0
     
-    def predict(inputs):
+    def predict(self, inputs):
         """
         Calculate result based on inputs
+
+        Args:
+            inputs (?) : a single input
+        Return:
+            (?) : the calculated result
         """
         return self.brain.predict(inputs)
