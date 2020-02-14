@@ -16,8 +16,6 @@ class Population():
 		population_size (int) : size of the population
 		population_variant_magnitude (float) : how much the population is mutating
 		kill_system (KillSystem) : the type of kill system used
-		input_shape (list{int}) : shape of the input
-		output_shape (list{int}) : shape of the prediction
 		units (list{Unit}) : a list of units within the population
 
 	TODOs
@@ -31,12 +29,9 @@ class Population():
 				a. Implement non-uniform distribution for performant units
 				b. More efficient unit produce by specificing num need to produce for each unit
 	"""
-	def __init__(self, population_size, population_variant_magnitude, kill_system, input_shape, output_shape):
-		self.population_size = population_size
+	def __init__(self, population_size, population_variant_magnitude, kill_system)
 		self.population_variant_magnitude = population_variant_magnitude
 		self.kill_system = kill_system
-		self.input_shape = input_shape
-		self.output_shape = output_shape
 		self.units = []
 
 		for _ in range(population_size):
