@@ -8,7 +8,7 @@ import random
 import enum
 
 from hyper import Hyperparam
-from layer import InputLayer, OutputLayer, HiddenLayer
+from neuron import Neuron
 
 class Unit():
     """
@@ -40,14 +40,10 @@ class Unit():
         self.weight_variant_magnitude = weight_variant_magnitude
         self.meta_variant_magnitude = meta_variant_magnitude
 
-        self.num_hidden = np.round(np.random.default_rng().normal(0, meta_variant_magnitude, size=1) + Hyperparam.unit_base_hidden_layer)
-        self.num_neurons = np.round(np.random.default_rng().normal(0, meta_variant_magnitude, size=num_hidden) + Hyperparam.unit_base_layer_neuron)
         self.input_shape = Hyperparam.input_shape
         self.output_shape = Hyperparam.output_shape
-        self.layers = [InputLayer(Hyperparam.input_layer_drop_rate, _product(input_shape), a)]
-        temp_pre_layer = layers[0]
-        for i in range(num_hidden):
-            temp_pre_layer = HiddenLayer(num_neurons[i], pre_layer=temp_pre_layer)
+        self.neurons = []
+
 
     def _product(list):
         p = 1

@@ -79,8 +79,20 @@ class Connections():
         return self.weights.check_weight_trend(death_mult)
 
 class Neuron():
-    def __init__(self, id, activation, connections, natural_death_thresh, random_death_prob,
-                 additional_produce_std, produce_variation_mag, produce_thresh, connection_drop_rate):
+	"""
+	A basic neuron
+
+	Params:
+		id (int) : the unique id for the neuron
+		distance (0<float<1): the distance of the neuron to the input neuron
+		activation (Function) : the function to calcuated the activation function
+		connections (dict{Neurons:int}) : dict of neurons to weights that it connects to
+		
+		pro
+		
+	"""
+    def __init__(self, id, activation, connections, natural_death_thresh, random_death_proba,
+                 natural_produce_thresh, random_produce_proba):
         self.id = id
         self.activation = activation
         self.connections = connections
@@ -93,6 +105,7 @@ class Neuron():
         self.produce_thresh = produce_thresh
 
         self.connection_drop_rate = connection_drop_rate
+        self.calcuated_output = None
 
     def gen_new_activation(old_activation, magnitude):
         #Gen new activation function based on global activation function tool

@@ -74,6 +74,9 @@ Algorithms:
 					-- pre_layer
 					-- next_layer
 
+					*When layer produce, it only add generic new layer at the end
+					*When layer die, 
+
 				Input Layer:
 					-- drop_rate
 					-- type_list (U)
