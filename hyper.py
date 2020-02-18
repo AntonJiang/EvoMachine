@@ -1,5 +1,9 @@
 import enum
 
+class LivingState(enum.Enum):
+    DIE = -1
+    NORM = 0
+
 
 class Hyperparam:
 	unit_base_hidden_layer = 5
@@ -9,3 +13,6 @@ class Hyperparam:
     output_shape = None
 
     input_layer_drop_rate = 0.1
+
+   	mean_neuron_num = None
+   	

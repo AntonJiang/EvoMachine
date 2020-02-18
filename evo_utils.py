@@ -7,7 +7,18 @@ import seaborn as sn
 import random
 import enum
 
-class KillSystem():.
+class Actiations():
+	"""
+	Pool of Activation functions
+	"""
+
+	def random_get():
+		"""
+		Return a random activation function
+		"""
+		
+
+class KillSystem():
 	"""
 	Util for killing list of Units
 	

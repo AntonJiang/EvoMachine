@@ -7,10 +7,9 @@ import seaborn as sn
 import random
 import enum
 
+from hyper import LivingState
 
-class LivingState(enum.Enum):
-    DIE = -1
-    NORM = 0
+
 
 class Weights():
     """
@@ -91,8 +90,7 @@ class Neuron():
 		pro
 		
 	"""
-    def __init__(self, id, activation, connections, natural_death_thresh, random_death_proba,
-                 natural_produce_thresh, random_produce_proba):
+    def __init__(self, id, distance, activation, connections, meta_variant):
         self.id = id
         self.activation = activation
         self.connections = connections
@@ -107,9 +105,10 @@ class Neuron():
         self.connection_drop_rate = connection_drop_rate
         self.calcuated_output = None
 
-    def gen_new_activation(old_activation, magnitude):
-        #Gen new activation function based on global activation function tool
-        return 0
+    def set_connections(self, connections):
+    	assert len(connections) >=1
+    	self.connections = connections
+
     def gen_variant_value(old_value, magnitude):
         percent_change = magnitude/100
         multiplier = ((np.random.default_rng().uniform(-1, 1, size=1)*percent_change) + 1)

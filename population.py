@@ -35,7 +35,7 @@ class Population():
 		self.units = []
 
 		for _ in range(population_size):
-			unit = Unit(init_weight_variant_magnitude(), init_probabilities(), population_variant_magnitude)
+			unit = Unit(init_probabilities(), population_variant_magnitude)
 			self.units.append(unit)
 	
 	def train(self, labels, data):
