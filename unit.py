@@ -29,7 +29,6 @@ class Unit():
     TODOs:
         Must:
             1. Initialize probabilities
-            2. Initialize brain
         future:
             1. Make each weight have their own variant magnitude
     """
@@ -44,15 +43,28 @@ class Unit():
         distances = np.sort(np.random.random(size=neuron_count), kind='quicksort')
 
         # Initalize distance and basic parameters
+        # First Neuron is the inputLayer
         for index, distance in zip(range(neuron_count), distances):
-            self.neurons.append(Neuron(id=i, distance=distance, activation=Activation.random_get(), \
-                connections=None, meta_variant=meta_variant_magnitude))
+            Neuron_class = Neuron
+            if (index == 0):
+                Neuron_class = InputNeuron
+            else if (index == neuron_count-1):
+                Neuron_class = OutputNeuron    
+            self.neurons.append(Neuron_class(distance=distance, activation=Activation.random_get(), \
+                connections=Connections([]), meta_variant=meta_variant_magnitude))
+
         # Initialize connections based on distances
         for index, neuron in zip(range(neuron_count), self.neurons):
-            neuron.set_connections(np.random.choice(neurons[index+1:], np.random.randint(low=1, high=neuron_count - index)))
+            if neuron.input_count == 0 and index != 0:
+                # If there are no input, then find set an input
+                input_connections = np.random.choice(neurons[:index], np.random.randint(low=1, high=index))
+                for input_neuron in input_connections:
+                    input_neuron.update_connections([neuron])
 
-        
-
+            else:
+            #Find output connections
+                target_neurons = np.random.choice(neurons[index+1:], np.random.randint(low=1, high=neuron_count - index))
+                neuron.update_connections(target_neurons)
 
     def _product(list):
         p = 1
@@ -69,6 +81,7 @@ class Unit():
         Return:
             (Unit) : the variant copy
         """
+        UNDER PROGRESS
         return 0
     
     def predict(self, inputs):
@@ -80,4 +93,5 @@ class Unit():
         Return:
             (?) : the calculated result
         """
-        return self.brain.predict(inputs)
+        UNDER PROGRESS
+        return

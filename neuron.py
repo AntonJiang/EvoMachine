@@ -11,71 +11,107 @@ from hyper import LivingState
 
 
 
-class Weights():
-    """
-    A wrapper and utility class for weights of each neuron'
+# class Weights():
+#     """
+#     A wrapper and utility class for weights of each neuron'
 
-    Param:
-    weights (dict{int:float}): map each connection's id to its weight
-    trends (dict{int:float}): map each connection's id to its trending multiplier
-    """
+#     Param:
+#     weights (dict{int:float}): map each connection's id to its weight
+#     trends (dict{int:float}): map each connection's id to its trending multiplier
+#     """
 
-    def __init__(self, weights, trends)
-        self.weights = weights
-        self.trends = trends
+#     def __init__(self, weights, trends)
+#         self.weights = weights
+#         self.trends = trends
 
-    def check_weight_trend(self, death_mult):
-        """
-        Check if any connection is meant to die or reproduce
+#     def check_weight_trend(self, death_mult):
+#         """
+#         Check if any connection is meant to die or reproduce
 
-        Args:
-        death_mult (float): A multiplier thresh for weight reproduce
+#         Args:
+#         death_mult (float): A multiplier thresh for weight reproduce
         
-        Return:
-        (dict{int:LivingState}): map each connection's id to its living state 
-        """
-        return dict(map(lambda trend: LivingState.DIE if (trend < death_mult) else 
-            LivingState.NORM, self.trends.items()))
+#         Return:
+#         (dict{int:LivingState}): map each connection's id to its living state 
+#         """
+#         return dict(map(lambda trend: LivingState.DIE if (trend < death_mult) else 
+#             LivingState.NORM, self.trends.items()))
 
-    def gen_new_weights(old_weights, magnitude):
-        percent_change = magnitude/100
-        multiplier = ((np.random.default_rng().uniform(-1, 1, size=len(old_weights.weights))*percent_change) + 1)
-        new_weights = old_weights.weights*multiplier
-        new_trends = old_weights.trends*(new_weights/old_weights.weights)
-        return Weights(new_weights, new_trends)
-        # TODO: Find a way to initialize global mult variabels
+#     def gen_new_weights(old_weights, magnitude):
+#         percent_change = magnitude/100
+#         multiplier = ((np.random.default_rng().uniform(-1, 1, size=len(old_weights.weights))*percent_change) + 1)
+#         new_weights = old_weights.weights*multiplier
+#         new_trends = old_weights.trends*(new_weights/old_weights.weights)
+#         return Weights(new_weights, new_trends)
+#         # TODO: Find a way to initialize global mult variabels
 
 
 
 class Connections():
-    def __init__(self, weights, states, functions):
+	"""
+	Each connection is from input neuron to target neuron specific
+
+	Params:
+		target_neuron (Neuron) : the target neuron
+		weight (float) : the weight multiplier of the current connection
+		function (Func) : the specific mathmatical function associated with
+							the connection, single input, single output
+		state (int) : 1 if the connection is working
+	"""
+	def __init__(self, target_neurons):
+		self.target_neurons = target_neurons
+		self.size = len(target_neurons)
+        self.weights = gen_new_weights(self.size)
+        self.states = np.ones(len(target_neurons))
+        self.functions = gen_new_functions()
+
+    def __init__(self, target_neurons, weights, functions, states):
+        self.target_neurons = target_neurons
         self.weights = weights
         self.states = states
         self.functions = functions
-        self.size = len(states)
 
-    def gen_new_connection(self, magnitude, drop_rate):
-        new_states = np.random.default_rng().uniform(size=size) < drop_rate
-        new_functions = Connections.gen_new_functions(self.functions, magnitude)
-        new_weights = Weights.gen_new_weights(self.weights, magnitude)
-        return Connections(new_weights, new_states, new_functions)
+    def add(self, neurons):
+    	"""
+    	Add more connections based on neurons
 
-    def gen_new_functions(old_functions, magnitude):
-        # TODO: New Functions varies from old_functions by magnitude
-        # NEED: A global pool of functions:
+    	Args:
+    		neurons (Neurons) : new target neuron for the connection to be added
+    	"""
 
-    def get_weights(self):
-        return self.weights.weights
-    def get_states(self):
-        return self.states
-    def get_functions(self):
-        return self.functions
-    def get_connections(self):
-        return np.stack([self.weights,weights, self.states, self.functions], axis=1)
+    def gen_new_weights(size):
+    	UNDER PROGRESS
+
+   	def gen_new_functions(size):
+   		UNDER PROGRESS
+
     def check_weight_trend(self, death_mult):
         # Return 0 for normal 1 for death
         # Upper level will kill connections accordingly when init the neuron
-        return self.weights.check_weight_trend(death_mult)
+        return self.weight.check_weight_trend(death_mult)
+
+class InputNeuron(Neuron):
+	"""
+	The First Neuron in a Unit, a wrapper for the input neuron
+
+	Params:
+		neuron (Neuron) : the basic neuron
+	"""
+	def __init__(self, input_shape, **kwargs):
+		super.__init__(**kwargs)
+		self.input_shape = input_shape
+
+class OutputNeuron(Neuron):
+	"""
+	The Last Neuron in a Unit, a wrapper for the output neuron
+
+	Params:
+		neuron (Neuron) : the basic neuron
+	"""
+	def __init__(self, output_shape, **kwargs):
+		super.__init__(**kwargs)
+		self.output_shape = output_shape
+
 
 class Neuron():
 	"""
@@ -90,24 +126,27 @@ class Neuron():
 		pro
 		
 	"""
-    def __init__(self, id, distance, activation, connections, meta_variant):
-        self.id = id
+    def __init__(self, distance, activation, connections, meta_variant, input_count=0):
+        self.distance = distance
         self.activation = activation
         self.connections = connections
-        self.natural_death_thresh = natural_death_thresh
-        self.random_death_prob = random_death_prob
+        self.meta_variant = meta_variant
+        self.input_count = input_count
+        self.temp_input = []
 
-        self.additional_produce_std = additional_produce_std
+    def update_input_count(self, delta):
+    	self.input_count += delta
 
-        self.produce_variation_mag = produce_variation_mag
-        self.produce_thresh = produce_thresh
-
-        self.connection_drop_rate = connection_drop_rate
-        self.calcuated_output = None
-
-    def set_connections(self, connections):
+    def update_connections(self, neurons):
+    	"""
+    	Extend the current connection with target neurons
+    	Generate properties similar to existing connections
+    	"""
     	assert len(connections) >=1
-    	self.connections = connections
+	    for target_neuron in neurons:
+            target_neuron.update_input_count(1);
+    	
+  		self.connections.add(neurons)
 
     def gen_variant_value(old_value, magnitude):
         percent_change = magnitude/100
@@ -116,21 +155,19 @@ class Neuron():
 
     def produce(self):
         ### Return list of child producd
-        produce_num = 1 + round(abs(np.random.default_rng().normal(0, additional_produce_std))/2) # Diveid 2 account for inverted mean
-        children = []
-        magnitude = self.produce_variation_mag
-        for _ in range(produce_num):
-            new_connection = self.connections.gen_new_connection(magnitude, self.connection_drop_rate)
-            new_activation = gen_new_activation(self.activation, magnitude)
-            child = Neuron(activation=new_activation, connections=new_connection, natural_death_thresh=gen_variant_value(self.natural_death_thresh, magnitude),
-                random_death_prob=gen_variant_value(self.random_death_prob, magnitude), additional_produce_std=gen_variant_value(self.additional_produce_std, magnitude),
-                produce_thresh=gen_variant_value(self.produce_thresh, magnitude), connection_drop_rate=gen_variant_value(self.connection_drop_rate, magnitude))
-            children.append(child)
-        return children
+        UNDER PROGRESS
+        return
 
-    def output(self, inputs):
-        # Input ordered by  
-        values = [] 
-        for func, value in zip(self.connections.get_functions):
-            values.append(func(value))
-        return self.activation(np.array(values).multiply(self.connections.get_weights() * self.connections.get_states()))
+    def output(self, single_input):
+        # Input ordered by
+        self.temp_input.append(single_input)
+        if (len(self.temp_input) != self.input_count):
+        	return
+
+       	functioned_output = [func(self.activation(temp_input)) for func in self.connections.functions]
+       	outputs = self.connections.states.multiply(functioned_output).multiply(self.connections.weights())
+       	
+       	for neuron, output in zip(self.connections.target_neurons, outputs):
+       		neuron.output(output)
+       	#Clear the calculation memory
+        temp_input = []
