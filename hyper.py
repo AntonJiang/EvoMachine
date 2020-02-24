@@ -16,3 +16,4 @@ class Hyperparam:
 
    	mean_neuron_num = None
    	
+   	output_activation = lambda x : x

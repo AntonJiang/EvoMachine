@@ -55,16 +55,18 @@ class Unit():
 
         # Initialize connections based on distances
         for index, neuron in zip(range(neuron_count), self.neurons):
-            if neuron.input_count == 0 and index != 0:
+            if (neuron.input_count == 0) or (index == neuron_count-1 and _product(neuron.output_shape) > neuron.input_count):
                 # If there are no input, then find set an input
+                # Or is the output neuron with output shape greater than input
                 input_connections = np.random.choice(neurons[:index], np.random.randint(low=1, high=index))
                 for input_neuron in input_connections:
                     input_neuron.update_connections([neuron])
 
-            else:
             #Find output connections
-                target_neurons = np.random.choice(neurons[index+1:], np.random.randint(low=1, high=neuron_count - index))
-                neuron.update_connections(target_neurons)
+            target_neurons = np.random.choice(neurons[index+1:], np.random.randint(low=1, high=neuron_count - index))
+            neuron.update_connections(target_neurons)
+        self.input_neuron = self.neurons[0]
+        self.output_neuron = self.neurons[neuron_count]
 
     def _product(list):
         p = 1
@@ -93,5 +95,5 @@ class Unit():
         Return:
             (?) : the calculated result
         """
-        UNDER PROGRESS
-        return
+        self.input_neuron.output(inputs)
+        return self.output_neuron.output_val

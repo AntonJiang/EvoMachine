@@ -63,7 +63,7 @@ class Connections():
 		self.size = len(target_neurons)
         self.weights = gen_new_weights(self.size)
         self.states = np.ones(len(target_neurons))
-        self.functions = gen_new_functions()
+        self.functions = gen_new_functions(self.size)
 
     def __init__(self, target_neurons, weights, functions, states):
         self.target_neurons = target_neurons
@@ -78,12 +78,30 @@ class Connections():
     	Args:
     		neurons (Neurons) : new target neuron for the connection to be added
     	"""
+        addition_size = lenn(neurons)
+        self.weights.extend(gen_new_weights(addition_size, self.weights))
+        self.size += addition_size
+        self.states.extend(np.ones(addition_size))
+        self.functions = gen_new_functions(self.size)
+        self.target_neurons.extend(neurons)
 
-    def gen_new_weights(size):
-    	UNDER PROGRESS
+    def gen_new_weights(size, reference_weight=[]):
+        """
+        Generate Weights based on Sample Weights
+        
+        Args:
+            size (int) : the size of weights need to be generated
+            sample_weight (list{float}) : sample weights for reference
+        
+        Return:
+            (list{float}) : new weights of size
+        """
+        mean = np.mean(reference_weight)
+        new_weights = np.random.default_rng().normal(mean, np.std(reference_weight) ,size)
+        return new_weights
 
    	def gen_new_functions(size):
-   		UNDER PROGRESS
+   		UNDER PROGESS
 
     def check_weight_trend(self, death_mult):
         # Return 0 for normal 1 for death
@@ -95,22 +113,48 @@ class InputNeuron(Neuron):
 	The First Neuron in a Unit, a wrapper for the input neuron
 
 	Params:
-		neuron (Neuron) : the basic neuron
+        input_shape (list{int}) : the input shape
+		** kwargs
+
 	"""
 	def __init__(self, input_shape, **kwargs):
 		super.__init__(**kwargs)
 		self.input_shape = input_shape
+        self.input_count = 1
+
+    @Override
+    def output(self, inputs):
+        inputs = inputs.flatten()
+        functioned_output = [func(self.activation(inputs)) for func in self.connections.functions]
+        outputs = self.connections.states.multiply(functioned_output).multiply(self.connections.weights())
+        
+        for neuron, output in zip(self.connections.target_neurons, outputs):
+            neuron.output(output)
 
 class OutputNeuron(Neuron):
 	"""
 	The Last Neuron in a Unit, a wrapper for the output neuron
 
 	Params:
-		neuron (Neuron) : the basic neuron
+		output_shape (list{int}) : the output shape
+        activation (Func) : unique activation for output
+        output_val (?) : the final output value 
 	"""
 	def __init__(self, output_shape, **kwargs):
 		super.__init__(**kwargs)
 		self.output_shape = output_shape
+        self.activation = Hyperparam.output_activation
+        self.output_val = None
+
+    @Override
+    def output():
+        self.temp_input.append(single_input)
+        if (len(self.temp_input) != self.input_count):
+            return
+
+        self.output_val = np.reshape(self.activation(temp_input), self.output_shape)
+
+        temp_input = []
 
 
 class Neuron():
@@ -122,9 +166,10 @@ class Neuron():
 		distance (0<float<1): the distance of the neuron to the input neuron
 		activation (Function) : the function to calcuated the activation function
 		connections (dict{Neurons:int}) : dict of neurons to weights that it connects to
-		
-		pro
-		
+		meta_variant (float) : the magnitude of how much all variables change
+        input_count (int) : the number of inputs connected
+        temp_input (list{?}) : the values of currently calculated inputs
+        
 	"""
     def __init__(self, distance, activation, connections, meta_variant, input_count=0):
         self.distance = distance
