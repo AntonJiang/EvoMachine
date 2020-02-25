@@ -1,6 +1,6 @@
 import numpy as np
 
-from evo_utils import KillSystem, ClockCycle, Pickle
+from evo_utils import KillSystem, Pickle
 from population import Population
 from hyper import Hyperparam
 

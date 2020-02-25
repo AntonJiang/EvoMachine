@@ -7,45 +7,6 @@ import seaborn as sn
 import random
 import enum
 
-from hyper import LivingState
-
-
-
-# class Weights():
-#     """
-#     A wrapper and utility class for weights of each neuron'
-
-#     Param:
-#     weights (dict{int:float}): map each connection's id to its weight
-#     trends (dict{int:float}): map each connection's id to its trending multiplier
-#     """
-
-#     def __init__(self, weights, trends)
-#         self.weights = weights
-#         self.trends = trends
-
-#     def check_weight_trend(self, death_mult):
-#         """
-#         Check if any connection is meant to die or reproduce
-
-#         Args:
-#         death_mult (float): A multiplier thresh for weight reproduce
-        
-#         Return:
-#         (dict{int:LivingState}): map each connection's id to its living state 
-#         """
-#         return dict(map(lambda trend: LivingState.DIE if (trend < death_mult) else 
-#             LivingState.NORM, self.trends.items()))
-
-#     def gen_new_weights(old_weights, magnitude):
-#         percent_change = magnitude/100
-#         multiplier = ((np.random.default_rng().uniform(-1, 1, size=len(old_weights.weights))*percent_change) + 1)
-#         new_weights = old_weights.weights*multiplier
-#         new_trends = old_weights.trends*(new_weights/old_weights.weights)
-#         return Weights(new_weights, new_trends)
-#         # TODO: Find a way to initialize global mult variabels
-
-
 
 class Connections():
 	"""
@@ -101,12 +62,13 @@ class Connections():
         return new_weights
 
    	def gen_new_functions(size):
-   		UNDER PROGESS
+   		UNDER 
 
     def check_weight_trend(self, death_mult):
         # Return 0 for normal 1 for death
         # Upper level will kill connections accordingly when init the neuron
-        return self.weight.check_weight_trend(death_mult)
+        UNDER PROGRESS
+        return
 
 class InputNeuron(Neuron):
 	"""

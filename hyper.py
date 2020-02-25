@@ -1,9 +1,3 @@
-import enum
-
-class LivingState(enum.Enum):
-    DIE = -1
-    NORM = 0
-
 
 class Hyperparam:
 	unit_base_hidden_layer = 5
