@@ -64,7 +64,7 @@ class Population():
 			null
 		"""
 		for y, x in zip(labels, data):
-			death_index = self.kill_system.mark_death(y, x, units)
+			death_index = self.kill_system.mark_death(y, x, self.units)
 			self.units = np.delete(self.units, death_index).tolist()
 
 	def produce(self):
@@ -102,18 +102,13 @@ class Population():
 		"""
 		return np.mean(results, axis=0)
 
-	def init_weight_variant_magnitude(self):
-		"""
-		Generate random weight var based on population variant
-		"""
-		var = abs(np.random.normal(0, self.population_variant_magnitude))
-		return var if var < 1 else 1
-
 	def init_probabilities(self):
 		"""
 		Generate initial probabilities for each unit
 		"""
-		layer_var = abs(np.random.default_rng().normal(0, self.population_variant_magnitude/4, 2))
-		neuron_var = abs(np.random.default_rng().normal(0, self.population_variant_magnitude/2, 2))
-		connection_var = abs(np.random.default_rng().normal(0, self.population_variant_magnitude, 2))
+		UNDER PROGRESS
+		
+		layer_var = abs(np.random.default_rng().normal(0, self.population_variant_magnitude/4))
+		neuron_var = abs(np.random.default_rng().normal(0, self.population_variant_magnitude/2))
+		connection_var = abs(np.random.default_rng().normal(0, self.population_variant_magnitude))
 		return list(np.append(layer_var, neuron_var, connection_var))

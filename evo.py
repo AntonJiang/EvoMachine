@@ -24,11 +24,12 @@ class EvoMachine(object):
 		self.populations = []
 		self.input_shape = input_shape
 		self.ouput_shape = ouput_shape
+		#TODOS: Set custom min_survice_percent
 		Hyperparam.input_shape = input_shape
 		Hyperparam.ouput_shape = ouput_shape
 		
 		for population in populations:
-			pop = Population(populations[0], populations[1], populations[2])
+			pop = Population(populations[0], populations[1], KillSystem(Hyperparam.min_survive_percent))
 			self.populations.append(pop)
 
 	def train(self, label, data):

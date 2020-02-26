@@ -7,6 +7,8 @@ import seaborn as sn
 import random
 import enum
 
+from evo_utils import Activations
+
 
 class Connections():
 	"""
@@ -43,7 +45,7 @@ class Connections():
         self.weights.extend(gen_new_weights(addition_size, self.weights))
         self.size += addition_size
         self.states.extend(np.ones(addition_size))
-        self.functions = gen_new_functions(self.size)
+        self.functions = Activations.random_get_functions(self.size)
         self.target_neurons.extend(neurons)
 
     def gen_new_weights(size, reference_weight=[]):
@@ -61,14 +63,11 @@ class Connections():
         new_weights = np.random.default_rng().normal(mean, np.std(reference_weight) ,size)
         return new_weights
 
-   	def gen_new_functions(size):
-   		UNDER 
-
     def check_weight_trend(self, death_mult):
         # Return 0 for normal 1 for death
         # Upper level will kill connections accordingly when init the neuron
-        UNDER PROGRESS
-        return
+        #TODOS
+        return 0
 
 class InputNeuron(Neuron):
 	"""
@@ -127,7 +126,7 @@ class Neuron():
 		id (int) : the unique id for the neuron
 		distance (0<float<1): the distance of the neuron to the input neuron
 		activation (Function) : the function to calcuated the activation function
-		connections (dict{Neurons:int}) : dict of neurons to weights that it connects to
+		connections (Connections) : dict of neurons to weights that it connects to
 		meta_variant (float) : the magnitude of how much all variables change
         input_count (int) : the number of inputs connected
         temp_input (list{?}) : the values of currently calculated inputs
@@ -160,9 +159,11 @@ class Neuron():
         multiplier = ((np.random.default_rng().uniform(-1, 1, size=1)*percent_change) + 1)
         return old_value*multiplier
 
-    def produce(self):
-        ### Return list of child producd
-        UNDER PROGRESS
+    def produce(self, c_produce_percent, c_del_percent):
+        """
+		Return a variant copy of the neuron
+        """
+        
         return
 
     def output(self, single_input):

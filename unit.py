@@ -5,7 +5,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sn
 import random
-import enum
+import copy
 
 from hyper import Hyperparam
 from evo_utils import Activation
@@ -17,26 +17,20 @@ class Unit():
 
     Param:
         probabilities (list{float}) :           
-            neuron_produce_prob (float) : the probability for one neuron to produce
-            neuron_del_prob (float) : the probability for one neuron to disappear
-            connection_produce_prob (float) : the probability for one connection to produce
-            connection_del_prob (float) : the probability for one connection to disappear
+            neuron_produce_percent (float) : the probability for one neuron to produce
+            neuron_del_percent (float) : the probability for one neuron to disappear
+            connection_produce_percent (float) : the probability for one connection to produce
+            connection_del_percent (float) : the probability for one connection to disappear
         meta_variant_magnitude (float) : the magnitude of how much all variables change
-        
-        num_hidden (int) : the number of hidden layers
-        neurons (list{Neurons})) : a list of neurons with their properties
 
     TODOs:
-        Must:
-            1. Initialize probabilities
         future:
             1. Make each weight have their own variant magnitude
     """
     def __init__(self, probabilities, meta_variant_magnitude):
+        self.probabilities = probabilities
         self.meta_variant_magnitude = meta_variant_magnitude
 
-        self.input_shape = Hyperparam.input_shape
-        self.output_shape = Hyperparam.output_shape
         self.neurons = []
         neuron_count = Hyperparam.mean_neuron_num + np.random.normal(0, meta_variant_magnitude)
 
@@ -51,7 +45,7 @@ class Unit():
             else if (index == neuron_count-1):
                 Neuron_class = OutputNeuron    
             self.neurons.append(Neuron_class(distance=distance, activation=Activation.random_get(), \
-                connections=Connections([]), meta_variant=meta_variant_magnitude))
+                connections=Connections([]), meta_variant=meta_variant_magnitude, probabilities=probabilities))
 
         # Initialize connections based on distances
         for index, neuron in zip(range(neuron_count), self.neurons):
@@ -65,8 +59,12 @@ class Unit():
             #Find output connections
             target_neurons = np.random.choice(neurons[index+1:], np.random.randint(low=1, high=neuron_count - index))
             neuron.update_connections(target_neurons)
-        self.input_neuron = self.neurons[0]
-        self.output_neuron = self.neurons[neuron_count]
+
+    def __init__(self, probabilities, meta_variant_magnitude, neurons):
+        self.probabilities = probabilities
+        self.meta_variant_magnitude = meta_variant_magnitude
+
+        self.neurons = neurons
 
     def _product(list):
         p = 1
@@ -83,9 +81,35 @@ class Unit():
         Return:
             (Unit) : the variant copy
         """
-        UNDER PROGRESS
-        return 0
+        #TODOs: varies probability and meta_variant by meta_variant
+        #TODOs: custom scheme for selected neurons to change
+        rng = np.random.default_rng()
+
+        og_size = len(self.neurons)
+        indexes = np.arange(og_size)
+        mother_index = rng.choice(indexes, size=_deter_size(rng, self.probabilities.neuron_produce_percent, \
+                                                        Hyperparam.neuron_produce_percent_variant, og_size), \
+            replace=False, shuffle=False)
+        survive_index = rng.choice(indexes, size=og_size - _deter_size(rng, self.probabilities.neuron_del_percent, \
+                                                        Hyperparam.neuron_del_percent_variant, og_size), \
+            replace=False, shuffle=False)        
+
+        new_neurons = []
+        for i in mother_index:
+            new_neurons.append(self.neurons[i].produce(connection_produce_percent, connection_del_percent))
+        for i in survive_index:
+            new_neurons.append(copy.deepcopy(self.neurons[i]))
+
+        new_unit = Unit(self.probabilities, self.meta_variant_magnitude, new_neurons)
+        return new_unit
     
+    def _deter_size(rng, mean, scale, og_size):
+        size = int(rng.normal(prob, scale)*og_size)
+        if size == 0:
+            return 1
+        if size == og_size:
+            return og_size -1
+
     def predict(self, inputs):
         """
         Calculate result based on inputs
@@ -95,5 +119,5 @@ class Unit():
         Return:
             (?) : the calculated result
         """
-        self.input_neuron.output(inputs)
-        return self.output_neuron.output_val
+        self.neurons[0].output(inputs)
+        return self.neurons[neuron_count].output_val

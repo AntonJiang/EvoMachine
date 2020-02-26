@@ -11,3 +11,10 @@ class Hyperparam:
    	mean_neuron_num = None
    	
    	output_activation = lambda x : x
+
+   	min_survive_percent = 0.3
+
+   	neuron_produce_percent_variant = 0.03
+
+   	neuron_del_percent_variant = 0.03
+
