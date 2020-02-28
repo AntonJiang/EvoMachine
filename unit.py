@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sn
 import random
 import copy
+import evo_utils as e_utils
 
 from hyper import Hyperparam
 from evo_utils import Activation
@@ -19,13 +20,13 @@ class Unit():
         probabilities (list{float}) :           
             neuron_produce_percent (float) : the probability for one neuron to produce
             neuron_del_percent (float) : the probability for one neuron to disappear
-            connection_produce_percent (float) : the probability for one connection to produce
-            connection_del_percent (float) : the probability for one connection to disappear
+            neruon_update_percent (float) : the probability for neuron to update
         meta_variant_magnitude (float) : the magnitude of how much all variables change
 
     TODOs:
         future:
             1. Make each weight have their own variant magnitude
+            2. Change Unit connection initiation to uniform for all distance, then check for unconnected !
     """
     def __init__(self, probabilities, meta_variant_magnitude):
         self.probabilities = probabilities
@@ -34,7 +35,7 @@ class Unit():
         self.neurons = []
         neuron_count = Hyperparam.mean_neuron_num + np.random.normal(0, meta_variant_magnitude)
 
-        distances = np.sort(np.random.random(size=neuron_count), kind='quicksort')
+        distances = np.sort(np.random.default_rng().random(size=neuron_count), kind='quicksort')
 
         # Initalize distance and basic parameters
         # First Neuron is the inputLayer
@@ -77,38 +78,56 @@ class Unit():
         Produce a single variant copy
         
         Args:
-            None
+            None 
         Return:
             (Unit) : the variant copy
         """
         #TODOs: varies probability and meta_variant by meta_variant
         #TODOs: custom scheme for selected neurons to change
         rng = np.random.default_rng()
-
         og_size = len(self.neurons)
         indexes = np.arange(og_size)
-        mother_index = rng.choice(indexes, size=_deter_size(rng, self.probabilities.neuron_produce_percent, \
-                                                        Hyperparam.neuron_produce_percent_variant, og_size), \
-            replace=False, shuffle=False)
-        survive_index = rng.choice(indexes, size=og_size - _deter_size(rng, self.probabilities.neuron_del_percent, \
+
+        new_unit = copy.deepcopy(self)
+
+
+        # Update existing neurons with new weights
+        update_index = rng.choice(np.arange(len(new_unit.neurons)), size=e_utils._deter_size(rng, self.probabilities.neruon_update_percent, \
+                                                        Hyperparam.neruon_update_percent_variant, len(new_neurons)), \
+            replace=False)
+
+        [new_unit.neurons[i].update(self.neurons) for i in update_index]
+
+
+        # Kill old neurons
+        dying_indexes = rng.choice(indexes, size=e_utils._deter_size(rng, self.probabilities.neuron_del_percent, \
                                                         Hyperparam.neuron_del_percent_variant, og_size), \
-            replace=False, shuffle=False)        
+            replace=False)        
+        
+        [new_unit.neurons[i].self_destruct() for i in dying_indexes]
+        self.refactor_graph()
 
-        new_neurons = []
-        for i in mother_index:
-            new_neurons.append(self.neurons[i].produce(connection_produce_percent, connection_del_percent))
-        for i in survive_index:
-            new_neurons.append(copy.deepcopy(self.neurons[i]))
+        # Produce new neurons
+        mother_indexes = rng.choice(indexes, size=e_utils._deter_size(rng, self.probabilities.neuron_produce_percent, \
+                                                        Hyperparam.neuron_produce_percent_variant, og_size), \
+            replace=False)
+                                                                #TODOs: Ulgy parameters
+        [new_unit.neurons.append(new_unit.neurons[i].produce(self.neurons)) for i in mother_indexes]
 
-        new_unit = Unit(self.probabilities, self.meta_variant_magnitude, new_neurons)
+        ### Maybe it's not neccesary to sort, instead, change update to accomandate for unsorted neurons
+        # sorted(new_unit.neurons, key=lambda neuron : neuron.distance)
+        
+        return new_unit
+
+    def refactor_graph(self):
+        """
+        Run the unit and clean out any died connections and establish isolated connections
+        """
+        TODO
+
         return new_unit
     
-    def _deter_size(rng, mean, scale, og_size):
-        size = int(rng.normal(prob, scale)*og_size)
-        if size == 0:
-            return 1
-        if size == og_size:
-            return og_size -1
+
 
     def predict(self, inputs):
         """

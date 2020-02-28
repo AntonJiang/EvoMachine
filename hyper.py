@@ -1,5 +1,9 @@
 
 class Hyperparam:
+"""
+            connection_produce_percent (float) : the probability for one connection to produce
+            connection_del_percent (float) : the probability for one connection to disappear
+"""
 	unit_base_hidden_layer = 5
     unit_base_layer_neuron = 5
 
@@ -18,3 +22,20 @@ class Hyperparam:
 
    	neuron_del_percent_variant = 0.03
 
+   	neuron_update_percent_variant = 0.2
+
+   	connection_update_percent = 0.4 
+
+   	connection_update_percent_variant = 0.05
+
+   	connection_update_ratio = 0.8 
+
+   	connection_life_percent = 0.4 
+
+   	connection_life_percent_variant = 0.05
+
+    connection_state_flip_percent = 0.1
+
+    connection_function_percent = 0.05 
+
+    connection_function_percent_variant = 0.01

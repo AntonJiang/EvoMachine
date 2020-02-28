@@ -6,68 +6,113 @@ import matplotlib.pyplot as plt
 import seaborn as sn
 import random
 import enum
+import copy
 
 from evo_utils import Activations
 
-
-class Connections():
+class Neuron():
 	"""
-	Each connection is from input neuron to target neuron specific
+	A basic neuron
 
 	Params:
-		target_neuron (Neuron) : the target neuron
-		weight (float) : the weight multiplier of the current connection
-		function (Func) : the specific mathmatical function associated with
-							the connection, single input, single output
-		state (int) : 1 if the connection is working
+		id (int) : the unique id for the neuron
+		distance (0<float<1): the distance of the neuron to the input neuron
+		activation (Function) : the function to calcuated the activation function
+		connections (Connections) : dict of neurons to weights that it connects to
+		meta_variant (float) : the magnitude of how much all variables change
+        input_count (int) : the number of inputs connected
+        temp_input (list{?}) : the values of currently calculated inputs
+        
 	"""
-	def __init__(self, target_neurons):
-		self.target_neurons = target_neurons
-		self.size = len(target_neurons)
-        self.weights = gen_new_weights(self.size)
-        self.states = np.ones(len(target_neurons))
-        self.functions = gen_new_functions(self.size)
+    def __init__(self, distance, activation, connections, meta_variant, input_neurons=[]):
+        self.distance = distance
+        self.activation = activation
+        self.connections = connections
+        self.meta_variant = meta_variant
+        self.input_count = len(input_neurons)
+        self.input_neurons = input_neurons
+        self.temp_input = []
+        self.mark_died = False
 
-    def __init__(self, target_neurons, weights, functions, states):
-        self.target_neurons = target_neurons
-        self.weights = weights
-        self.states = states
-        self.functions = functions
+    def update_input_count(self, delta):
+    	self.input_count += delta
 
-    def add(self, neurons):
+    def update_connections(self, neurons):
     	"""
-    	Add more connections based on neurons
-
-    	Args:
-    		neurons (Neurons) : new target neuron for the connection to be added
+    	Extend the current connection with target neurons
+    	Generate properties similar to existing connections
     	"""
-        addition_size = lenn(neurons)
-        self.weights.extend(gen_new_weights(addition_size, self.weights))
-        self.size += addition_size
-        self.states.extend(np.ones(addition_size))
-        self.functions = Activations.random_get_functions(self.size)
-        self.target_neurons.extend(neurons)
+    	assert len(connections) >=1
+	    for target_neuron in neurons:
+            target_neuron.update_input_count(1);
+    	
+  		self.connections.add(neurons)
 
-    def gen_new_weights(size, reference_weight=[]):
-        """
-        Generate Weights based on Sample Weights
-        
-        Args:
-            size (int) : the size of weights need to be generated
-            sample_weight (list{float}) : sample weights for reference
-        
-        Return:
-            (list{float}) : new weights of size
-        """
-        mean = np.mean(reference_weight)
-        new_weights = np.random.default_rng().normal(mean, np.std(reference_weight) ,size)
-        return new_weights
+    def gen_variant_value(old_value, magnitude):
+        percent_change = magnitude/100
+        multiplier = ((np.random.default_rng().uniform(-1, 1, size=1)*percent_change) + 1)
+        return old_value*multiplier
 
-    def check_weight_trend(self, death_mult):
-        # Return 0 for normal 1 for death
-        # Upper level will kill connections accordingly when init the neuron
-        #TODOS
-        return 0
+    def produce(self, meta_neurons):
+        """
+		Return a variant copy of the neuron
+        """
+        new_connection = Connections(self.connections.target_neurons, self.connections.weights, \
+        				self.connections.functions, self.connections.states)
+
+        # Child will have a new distance
+        new_distance = np.random.default_rng().random()
+        
+        if (new_distance < self.distance):
+        	# Need to check incoming connections
+        # Clean wrong connections under the new distance
+        for c in new_connection:
+
+        new_neuron = Neuron(self.distance, self.activation, new_connection, self.meta_variant, input_count=self.input_count)
+
+
+        
+
+        new_neuron.update(meta_neurons)
+
+        return
+
+    def self_destruct(self):
+    	"""
+		Delete all the connections involved with the neuron
+    	"""
+    	# Delete outgoing connections
+    	[target_neuron.update_input_count(-1) for target_neuron in self.connections.target_neurons]
+		self.mark_died = True
+
+    def update(self, meta_neurons):
+    	"""
+    	Update the connections of the neuron
+
+    	"""
+    	rng = np.random.default_rng()
+
+    	if (rng.random() > 1.0/self.meta_variant):
+    		self.activation = Activations.random_get()
+
+    	self.connections.update(self.meta_variant, meta_neurons, self.distance)
+
+    	self.meta_variant = rng.normal(self.meta_variant, meta_variant/3)
+
+
+    def output(self, single_input):
+        # Input ordered by
+        self.temp_input.append(single_input)
+        if (len(self.temp_input) != self.input_count):
+        	return
+
+       	functioned_output = [func(self.activation(temp_input)) for func in self.connections.functions]
+       	outputs = self.connections.states.multiply(functioned_output).multiply(self.connections.weights())
+       	
+       	for neuron, output in zip(self.connections.target_neurons, outputs):
+       		neuron.output(output)
+       	#Clear the calculation memory
+        temp_input = []
 
 class InputNeuron(Neuron):
 	"""
@@ -115,67 +160,4 @@ class OutputNeuron(Neuron):
 
         self.output_val = np.reshape(self.activation(temp_input), self.output_shape)
 
-        temp_input = []
-
-
-class Neuron():
-	"""
-	A basic neuron
-
-	Params:
-		id (int) : the unique id for the neuron
-		distance (0<float<1): the distance of the neuron to the input neuron
-		activation (Function) : the function to calcuated the activation function
-		connections (Connections) : dict of neurons to weights that it connects to
-		meta_variant (float) : the magnitude of how much all variables change
-        input_count (int) : the number of inputs connected
-        temp_input (list{?}) : the values of currently calculated inputs
-        
-	"""
-    def __init__(self, distance, activation, connections, meta_variant, input_count=0):
-        self.distance = distance
-        self.activation = activation
-        self.connections = connections
-        self.meta_variant = meta_variant
-        self.input_count = input_count
-        self.temp_input = []
-
-    def update_input_count(self, delta):
-    	self.input_count += delta
-
-    def update_connections(self, neurons):
-    	"""
-    	Extend the current connection with target neurons
-    	Generate properties similar to existing connections
-    	"""
-    	assert len(connections) >=1
-	    for target_neuron in neurons:
-            target_neuron.update_input_count(1);
-    	
-  		self.connections.add(neurons)
-
-    def gen_variant_value(old_value, magnitude):
-        percent_change = magnitude/100
-        multiplier = ((np.random.default_rng().uniform(-1, 1, size=1)*percent_change) + 1)
-        return old_value*multiplier
-
-    def produce(self, c_produce_percent, c_del_percent):
-        """
-		Return a variant copy of the neuron
-        """
-        
-        return
-
-    def output(self, single_input):
-        # Input ordered by
-        self.temp_input.append(single_input)
-        if (len(self.temp_input) != self.input_count):
-        	return
-
-       	functioned_output = [func(self.activation(temp_input)) for func in self.connections.functions]
-       	outputs = self.connections.states.multiply(functioned_output).multiply(self.connections.weights())
-       	
-       	for neuron, output in zip(self.connections.target_neurons, outputs):
-       		neuron.output(output)
-       	#Clear the calculation memory
         temp_input = []

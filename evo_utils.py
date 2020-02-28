@@ -131,11 +131,11 @@ class KillSystem():
 		index = np.random.choice(index, replace=False, size=del_size, p=p)
 		return index 
 		
-def mae(predictions, targets):
-    differences = predictions - targets
-    absolute_differences = np.absolute(differences)
-    mean_absolute_differences = absolute_differences.mean()
-    return mean_absolute_differences
+	def mae(predictions, targets):
+	    differences = predictions - targets
+	    absolute_differences = np.absolute(differences)
+	    mean_absolute_differences = absolute_differences.mean()
+	    return mean_absolute_differences
 
 # TODO:
 # class Pickle(object):
@@ -143,3 +143,10 @@ def mae(predictions, targets):
 # 	def __init__(self, arg):
 # 		self.arg = arg
 # 		
+
+def _deter_size(rng, mean, scale, og_size):
+    size = int(rng.normal(prob, scale)*og_size)
+    if size == 0:
+        return 1
+    if size == og_size:
+        return og_size -1
