@@ -1,12 +1,3 @@
-import numpy as np
-import pandas as pd
-import statsmodels as sm
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import seaborn as sn
-import random
-import enum
-
 from unit import Unit
 
 class Population():
@@ -29,13 +20,14 @@ class Population():
 				a. Implement non-uniform distribution for performant units
 				b. More efficient unit produce by specificing num need to produce for each unit
 	"""
-	def __init__(self, population_size, population_variant_magnitude, kill_system)
+	def __init__(self, population_size, population_variant_magnitude, kill_system):
 		self.population_variant_magnitude = population_variant_magnitude
 		self.kill_system = kill_system
 		self.units = []
 
 		for _ in range(population_size):
-			unit = Unit(init_probabilities(), population_variant_magnitude)
+			unit = Unit(self.init_probabilities(), population_variant_magnitude)
+			unit.setup()
 			self.units.append(unit)
 	
 	def train(self, labels, data):
@@ -104,11 +96,11 @@ class Population():
 
 	def init_probabilities(self):
 		"""
-		Generate initial probabilities for each unit
+		Generate initial probabilities for each unit	    
+		probabilities (list{float}) :           
+	        neuron_produce_percent (float) : the probability for one neuron to produce
+	        neuron_del_percent (float) : the probability for one neuron to disappear
+	        neruon_update_percent (float) : the probability for neuron to update
 		"""
-		UNDER PROGRESS
-		
-		layer_var = abs(np.random.default_rng().normal(0, self.population_variant_magnitude/4))
-		neuron_var = abs(np.random.default_rng().normal(0, self.population_variant_magnitude/2))
-		connection_var = abs(np.random.default_rng().normal(0, self.population_variant_magnitude))
-		return list(np.append(layer_var, neuron_var, connection_var))
+
+		return [0.1, 0.1, 0.2]

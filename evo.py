@@ -1,8 +1,21 @@
 import numpy as np
+import pandas as pd
 
-from evo_utils import KillSystem, Pickle
+from evo_utils import Activations, KillSystem
 from population import Population
-from hyper import Hyperparam
+import hyper
+
+
+def main():
+	train_data = pd.read_csv("data/random-linear-regression/train.csv")
+
+	population = [100, 10.0]
+	populations = [population for _ in range(10)]
+	label = np.array(train_data['y'])
+	data = np.array(train_data['x'])
+	
+	model = EvoMachine(populations, (1), (1))
+
 
 class EvoMachine(object):
 	""" docstring for EvoMachine
@@ -11,7 +24,6 @@ class EvoMachine(object):
 	populations (list{list{float}}): Variables for each population, population id to parameters
 		population_size (int) : number of units in the population
 		population_variant_magnitude (float) : the magnitude of mutation within the population
-		kill_system (KillSystem) : the specific kill system used for the population
 	input_shape (list{int})
 	ouput_shape (list{int})
 
@@ -22,14 +34,12 @@ class EvoMachine(object):
 	"""
 	def __init__(self, populations, input_shape, ouput_shape):
 		self.populations = []
-		self.input_shape = input_shape
-		self.ouput_shape = ouput_shape
 		#TODOS: Set custom min_survice_percent
-		Hyperparam.input_shape = input_shape
-		Hyperparam.ouput_shape = ouput_shape
+		hyper.input_shape = input_shape
+		hyper.ouput_shape = ouput_shape
 		
 		for population in populations:
-			pop = Population(populations[0], populations[1], KillSystem(Hyperparam.min_survive_percent))
+			pop = Population(population[0], population[1], KillSystem(hyper.min_survive_percent))
 			self.populations.append(pop)
 
 	def train(self, label, data):
@@ -68,3 +78,6 @@ class EvoMachine(object):
 		({?}) : the average voted result
 		"""
 		return np.mean(results, axis=0)
+
+if __name__ == "__main__":
+	main()

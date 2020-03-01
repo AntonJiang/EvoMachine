@@ -1,17 +1,8 @@
+import hyper
 import numpy as np
-import pandas as pd
-import statsmodels as sm
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import seaborn as sn
-import random
-import copy
-import evo_utils as e_utils
-
-from hyper import Hyperparam
-from evo_utils import Activation
-from neuron import Neuron
-
+from neuron import Neuron, InputNeuron, OutputNeuron
+from evo_utils import Activations
+from connections import Connections
 class Unit():
     """
     Class for each individual computational unit
@@ -28,14 +19,16 @@ class Unit():
             1. Make each weight have their own variant magnitude
             2. Change Unit connection initiation to uniform for all distance, then check for unconnected !
     """
-    def __init__(self, probabilities, meta_variant_magnitude):
+    def __init__(self, probabilities, meta_variant_magnitude, neurons=[]):
         self.probabilities = probabilities
         self.meta_variant_magnitude = meta_variant_magnitude
-
         self.neurons = []
-        neuron_count = Hyperparam.mean_neuron_num + np.random.normal(0, meta_variant_magnitude)
 
-        distances = np.sort(np.random.default_rng().random(0.01 size=neuron_count), kind='quicksort')
+
+    def setup(self):
+        neuron_count = (hyper.mean_neuron_num)
+
+        distances = np.sort(np.random.default_rng().random(size=neuron_count), kind='quicksort')
         distances[0] = -1
         distances[-1] = 1
         
@@ -48,12 +41,12 @@ class Unit():
             if index == 0:
                 Neuron_class = InputNeuron
             else:
-                input_neurons = np.random.choice(neurons[:index], np.random.randint(low=1, high=index+1))
+                input_neurons = np.random.choice(self.neurons[:index], np.random.randint(low=1, high=index+1))
                 if index == len(distances) - 1:
                     Neuron_class = OutputNeuron
 
-            self.neurons.append(Neuron_class(distance=distance, activation=Activation.random_get(), \
-                connections=Connections([]), meta_variant=meta_variant_magnitude, input_neuron=input_neurons))
+            self.neurons.append(Neuron_class(distance=distance, activation=Activations.random_get(), \
+                connections=Connections([]), meta_variant=self.meta_variant_magnitude, input_neurons=input_neurons))
 
             for input_neuron in input_neurons:
                 input_neuron.update_connections([self.neurons[-1]])
@@ -62,17 +55,12 @@ class Unit():
         # Initialize connections based on distances
         for index, neuron in enumerate(self.neurons[:-1]):
             #Find output connections
-            target_neurons = np.random.choice(neurons[index+1:], np.random.randint(low=1, high=neuron_count - index))
+            target_neurons = np.random.choice(self.neurons[index+1:], np.random.randint(low=1, high=neuron_count - index))
             neuron.update_connections(target_neurons)
 
         refactor_ouput(self)
-        refactor_input(self)   
+        refactor_input(self)
 
-    def __init__(self, probabilities, meta_variant_magnitude, neurons):
-        self.probabilities = probabilities
-        self.meta_variant_magnitude = meta_variant_magnitude
-
-        self.neurons = neurons
 
     def _product(list):
         p = 1
@@ -99,7 +87,7 @@ class Unit():
 
         # Kill old neurons
         dying_indexes = rng.choice(indexes[1:-1], size=e_utils._deter_size(rng, self.probabilities.neuron_del_percent, \
-                                                        Hyperparam.neuron_del_percent_variant, og_size), \
+                                                        hyper.neuron_del_percent_variant, og_size), \
             replace=False)
         
         [new_unit.neurons[i].self_destruct() for i in sorted(dying_indexes, reverse=True)]
@@ -107,14 +95,14 @@ class Unit():
 
         # Produce new neurons
         mother_indexes = rng.choice(indexes[1:-1], size=e_utils._deter_size(rng, self.probabilities.neuron_produce_percent, \
-                                                        Hyperparam.neuron_produce_percent_variant, og_size), \
+                                                        hyper.neuron_produce_percent_variant, og_size), \
             replace=False)
 
         [new_unit.neurons.append(new_unit.neurons[i].produce(self.neurons)) for i in mother_indexes]
         
         # Update existing neurons with new weights
         update_index = rng.choice(np.arange(len(new_unit.neurons)), size=e_utils._deter_size(rng, self.probabilities.neruon_update_percent, \
-                                                        Hyperparam.neruon_update_percent_variant, len(new_neurons)), \
+                                                        hyper.neruon_update_percent_variant, len(new_neurons)), \
             replace=False)
 
         [new_unit.neurons[i].update(self.neurons) for i in update_index]
@@ -153,7 +141,7 @@ class Unit():
 
     def refactor_ouput(self):
         out = self.neurons[-1]
-        out_size = _product(Hyperparam.output_shape)
+        out_size = _product(hyper.output_shape)
         curr_size = out.input_count
         delta_size = _delta_size(curr_size, out_size, 1)
 
@@ -183,7 +171,7 @@ class Unit():
     def refactor_input(self):
         rng = np.random.default_rng()
         input_neuron = self.neuron[0]
-        in_size = _product(Hyperparam.input_shape)
+        in_size = _product(hyper.input_shape)
         curr_size = input_neuron.connections.size
         delta_size = _delta_size(curr_size, in_size, 0)
 
@@ -247,9 +235,9 @@ class Unit():
         if multiplier <= 0:
             multiplier = 1
         if flag == 1:
-            Hyperparam.output_aggregate_multiplier = multiplier
+            hyper.output_aggregate_multiplier = multiplier
         if flag == 0:
-            Hyperparam.input_aggregate_multiplier = multiplier
+            hyper.input_aggregate_multiplier = multiplier
         delta_size = want_size*multiplier - curr_size
         return delta_size
 

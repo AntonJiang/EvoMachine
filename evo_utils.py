@@ -1,13 +1,23 @@
 import numpy as np
-import pandas as pd
-import statsmodels as sm
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import seaborn as sn
-import random
-import enum
 
-class Actiations():
+# TODO:
+# class Pickle(object):
+# 	"""docstring for Pickle"""
+# 	def __init__(self, arg):
+# 		self.arg = arg
+# 		
+
+def _deter_size(rng, mean, scale, og_size):
+	size = int(rng.normal(prob, scale)*og_size)
+	if size == 0:
+		return 1
+	if size == og_size:
+		return og_size -1
+
+def aggregate(inputs, multiplier):
+	return inputs.reshape(multiplier, -1).sum(axis=0)/(multiplier)
+
+class Activations():
 	"""
 	Pool of Activation functions
 
@@ -22,9 +32,9 @@ class Actiations():
 	        return a
 	
 	def linear_function(x, a=1, _coe=0):
-    	return a*x + _coe
+		return a*x + _coe
 
-    def sigmoid_function(x, a=None):
+	def sigmoid_function(x, a=None):
 	    z = (1/(1 + np.exp(-x)))
 	    return z
 
@@ -44,56 +54,56 @@ class Actiations():
 	    else:
 	        return x
 
-    def elu_function(x, a):
+	def elu_function(x, a):
 	    if x<0:
 	        return a*(np.exp(x)-1)
 	    else:
 	        return x
 
-    def swish_function(x, a=None):
-    	return x/(1-np.exp(-x))
+	def swish_function(x, a=None):
+		return x/(1-np.exp(-x))
 
-    def softmax_function(x, a=None):
+	def softmax_function(x, a=None):
 	    z = np.exp(x)
 	    z_ = z/z.sum()
 	    return z_
-    
+
 	def polynomial_2nd_function(x, a=None, b=None):
 		return a*x*x + linear_function(x,b)
 
 	def polynomial_3rd_function(x, a=None, b=None, c=None):
 		return a*x*x*x + polynomial_2nd_function(x, b, c)
 
-    single_activation = [binary_step, linear_function, sigmoid_function, tanh_function, \
-    	relu_function, leaky_relu_function, elu_function, swish_function, \
-    	softmax_function]
+	single_activation = [binary_step, linear_function, sigmoid_function, tanh_function, \
+		relu_function, leaky_relu_function, elu_function, swish_function, \
+			softmax_function]
+	
+	pool_activation = [lambda x : func(x.sum()) for func in single_activation]
 
-   	pool_activation = [lambda x : func(x.sum()) for func in single_activation]
+	single_function = [linear_function, sigmoid_function, leaky_relu_function, swish_function, \
+			softmax_function, polynomial_2nd_function, polynomial_3rd_function]
 
-   	single_function = [linear_function, sigmoid_function, leaky_relu_function, swish_function, \
-   		softmax_function, polynomial_2nd_function, polynomial_3rd_function]
-
-   	def random_get_functions(size):
+	def random_get_functions(size):
 		"""
-		Return a random activation function
+		Return a random activation functions
 		
 		Args:
 			size (int) : the size of the functions
 		Return 
 			(list{Func}) : a list of random activation functions
 		"""
-		return np.random.choice(single_function, size=size)
-
+		return np.random.choice(Activations.single_function, size=size)
 
 	def random_get():
 		"""
-		Return a random activation function
+		Return a random activation functions
 		
 		Args:
 		Return 
 			(list{Func}) : a list of random activation functions
 		"""
-		return np.random.choice(pool_activation)
+		return np.random.choice(Activations.pool_activation)
+
 
 class KillSystem():
 	"""
@@ -105,7 +115,7 @@ class KillSystem():
 	"""
 
 
-	def __init__(min_survive):
+	def __init__(self, min_survive):
 		self.min_survive = min_survive
 
 	def mark_death(self, true_ouput, input_val, units):
@@ -137,21 +147,3 @@ class KillSystem():
 	    mean_absolute_differences = absolute_differences.mean()
 	    return mean_absolute_differences
 
-# TODO:
-# class Pickle(object):
-# 	"""docstring for Pickle"""
-# 	def __init__(self, arg):
-# 		self.arg = arg
-# 		
-
-def _deter_size(rng, mean, scale, og_size):
-    size = int(rng.normal(prob, scale)*og_size)
-    if size == 0:
-        return 1
-    if size == og_size:
-        return og_size -1
-
-
-
-def aggregate(inputs, multiplier):
-    return inputs.reshape(multiplier, -1).sum(axis=0)/(multiplier)
