@@ -150,3 +150,8 @@ def _deter_size(rng, mean, scale, og_size):
         return 1
     if size == og_size:
         return og_size -1
+
+
+
+def aggregate(inputs, multiplier):
+    return inputs.reshape(multiplier, -1).sum(axis=0)/(multiplier)

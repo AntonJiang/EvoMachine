@@ -39,3 +39,9 @@ class Hyperparam:
     connection_function_percent = 0.05 
 
     connection_function_percent_variant = 0.01
+
+    input_aggregate_multiplier = 1
+
+    output_aggregate_multiplier = 1
+
+

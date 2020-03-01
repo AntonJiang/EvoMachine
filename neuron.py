@@ -30,22 +30,36 @@ class Neuron():
         self.connections = connections
         self.meta_variant = meta_variant
         self.input_count = len(input_neurons)
+        #TODO, optimize refactor, change input neurons to dict with unique input count
         self.input_neurons = input_neurons
         self.temp_input = []
-        self.mark_died = False
+    def del_input_i(self, index):
+        del self.input_neurons[index]
+        self.input_count -= 1
+    
+    def del_input(self, neuron):
+        self.input_neurons.remove(neuron)
+        self.input_count -= 1
+
+    def update_input_neurons(neurons):
+        self.input_neurons.extend(neurons)
+        self.input_count += len(neurons)
 
     def update_input_count(self, delta):
     	self.input_count += delta
+
+    def delete_connection_i(self, index):
+        self.connections.delete(index, self)
+
+    def delete_connection(self, neuron):
+        index = self.connections.target_neurons.index(neuron)
+        self.connections.delete(index, self)
 
     def update_connections(self, neurons):
     	"""
     	Extend the current connection with target neurons
     	Generate properties similar to existing connections
-    	"""
-    	assert len(connections) >=1
-	    for target_neuron in neurons:
-            target_neuron.update_input_count(1);
-    	
+    	"""    	
   		self.connections.add(neurons)
 
     def gen_variant_value(old_value, magnitude):
@@ -62,28 +76,38 @@ class Neuron():
 
         # Child will have a new distance
         new_distance = np.random.default_rng().random()
-        
-        if (new_distance < self.distance):
-        	# Need to check incoming connections
-        # Clean wrong connections under the new distance
-        for c in new_connection:
 
-        new_neuron = Neuron(self.distance, self.activation, new_connection, self.meta_variant, input_count=self.input_count)
+        new_neuron = Neuron(self.distance, self.activation, new_connection, self.meta_variant, input_neurons=copy.copy(self.input_neurons) )
 
+        #Check for Distance mismatch of connections
+        for index in range(len(new_connection.target_neurons)-1, 0):
+            if (new_distance >  new_connection.target_neurons[index].distance and new_distance > self.distance): 
+                # Remove the target connection
+                new_connection.delete(index)
+            else:
+                new_connection.target_neurons.update_input_neurons([new_neuron])
 
-        
+        # Check for distance mismatch for inputs
+        for index in range(len(new_neuron.input_neurons)-1, 0):
+            if (new_distance < new_neuron.input_neurons[index].distance and new_distance < self.distance):
+                new_neuron.del_input_i(index)
+            else:
+                new_neuron.input_neuron[index].update_connections([new_neuron])
 
         new_neuron.update(meta_neurons)
 
-        return
+        return new_neuron
 
     def self_destruct(self):
     	"""
 		Delete all the connections involved with the neuron
     	"""
     	# Delete outgoing connections
-    	[target_neuron.update_input_count(-1) for target_neuron in self.connections.target_neurons]
-		self.mark_died = True
+    	for target_neuron in self.connections.target_neurons:
+            target_neuron.del_input(self)
+        for input_neuron in self.input_neurons:
+            input_neuron.delete_connection(self)
+        del self
 
     def update(self, meta_neurons):
     	"""
@@ -95,7 +119,7 @@ class Neuron():
     	if (rng.random() > 1.0/self.meta_variant):
     		self.activation = Activations.random_get()
 
-    	self.connections.update(self.meta_variant, meta_neurons, self.distance)
+    	self.connections.update(self.meta_variant, self, meta_neurons, self.distance)
 
     	self.meta_variant = rng.normal(self.meta_variant, meta_variant/3)
 
@@ -127,11 +151,14 @@ class InputNeuron(Neuron):
 		super.__init__(**kwargs)
 		self.input_shape = input_shape
         self.input_count = 1
+        self.activation = None
 
     @Override
     def output(self, inputs):
-        inputs = inputs.flatten()
-        functioned_output = [func(self.activation(inputs)) for func in self.connections.functions]
+
+        inputs = evo_utils.aggregate(inputs.flatten(), Hyperparam.input_aggregate_multiplier)
+
+        functioned_output = [func(output) for output, func in zip(inputs, self.connections.functions)]
         outputs = self.connections.states.multiply(functioned_output).multiply(self.connections.weights())
         
         for neuron, output in zip(self.connections.target_neurons, outputs):
@@ -146,11 +173,10 @@ class OutputNeuron(Neuron):
         activation (Func) : unique activation for output
         output_val (?) : the final output value 
 	"""
-	def __init__(self, output_shape, **kwargs):
+	def __init__(self, **kwargs):
 		super.__init__(**kwargs)
-		self.output_shape = output_shape
-        self.activation = Hyperparam.output_activation
         self.output_val = None
+        self.activation = Hyperparam.output_activation
 
     @Override
     def output():
@@ -158,6 +184,6 @@ class OutputNeuron(Neuron):
         if (len(self.temp_input) != self.input_count):
             return
 
-        self.output_val = np.reshape(self.activation(temp_input), self.output_shape)
+        self.output_val = np.reshape(self.activation(evo_utils.aggregate(temp_input, Hyperparam.output_aggregate_multiplier)), Hyperparam.output_shape)
 
         temp_input = []

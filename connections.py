@@ -33,13 +33,11 @@ class Connections():
         """
         Delete the connection at the giving index if possible
         """
-        if (self.target_neurons[index].input_count > 1):
-            self.target_neurons[index].update_input_count(-1)
-            self.size -= 1
-            del self.weights[index]
-            del self.states[index]
-            del self.functions[indx]
-            del self.target_neurons[index]
+        self.size -= 1
+        del self.weights[index]
+        del self.states[index]
+        del self.functions[indx]
+        del self.target_neurons[index]
 
 
     def add(self, neurons):
@@ -56,7 +54,7 @@ class Connections():
         self.functions = Activations.random_get_functions(self.size)
         self.target_neurons.extend(neurons)
 
-    def update(self, meta_variant, neurons, distance):
+    def update(self, meta_variant, neuron, neurons, distance):
         """
         Update the connection in some degree, delete some connection, add some more connections
         """
@@ -66,8 +64,10 @@ class Connections():
         death_index = rng.choice(np.arange(self.size), size=e_utils._deter_size(rng, Hyperparam.connection_life_percent/2, \
                                                         Hyperparam.connection_life_percent_variant/2, self.size), \
             replace=False)
-        for i in death_index:
-            self.delete(i)
+        for i in sorted(death_index, reverse=True):
+            self.delete(i, neuron)
+            self.target_neurons[i].del_input(neuron)
+        
 
         update_index = rng.choice(np.arange(self.size), size=e_utils._deter_size(rng, Hyperparam.connection_update_percent, \
                                                         Hyperparam.connection_update_percent_variant, self.size), \
@@ -81,7 +81,7 @@ class Connections():
                                                         Hyperparam.connection_life_percent_variant/2, self.size), \
             replace=False)
         
-        birth_neurons = [neuron for neuron in birth_neurons if distance < neuron.distance]
+        birth_neurons = [neuron for neuron in birth_neurons if distance < neuron.distance ]
         self.add(birth_neurons)
 
     def _update(self, index, meta_variant):
