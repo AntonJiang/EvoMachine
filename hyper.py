@@ -12,8 +12,6 @@ input_layer_drop_rate = 0.1
 
 mean_neuron_num = 30
 
-output_activation = lambda x : x
-
 min_survive_percent = 0.3
 
 neuron_produce_percent_variant = 0.03
@@ -22,19 +20,19 @@ neuron_del_percent_variant = 0.03
 
 neuron_update_percent_variant = 0.2
 
-connection_update_percent = 0.4 
+connection_update_percent = 0.4
 
 connection_update_percent_variant = 0.05
 
-connection_update_ratio = 0.8 
+connection_update_ratio = 0.8
 
-connection_life_percent = 0.4 
+connection_life_percent = 0.4
 
 connection_life_percent_variant = 0.05
 
 connection_state_flip_percent = 0.1
 
-connection_function_percent = 0.05 
+connection_function_percent = 0.05
 
 connection_function_percent_variant = 0.01
 
@@ -42,4 +40,8 @@ input_aggregate_multiplier = 1
 
 output_aggregate_multiplier = 1
 
+connection_reference_weight = 10
 
+
+def output_activation(x):
+    return x
