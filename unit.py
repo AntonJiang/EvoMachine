@@ -23,10 +23,9 @@ class Unit:
             2. Change Unit connection initiation to uniform for all distance, then check for unconnected !
     """
 
-    def __init__(self, probabilities, meta_variant_magnitude, neurons=None):
+    def __init__(self, meta_variant_magnitude, neurons=None):
         if neurons is None:
             neurons = []
-        self.probabilities = probabilities
         self.meta_variant_magnitude = meta_variant_magnitude
         self.neurons = neurons
 
@@ -46,7 +45,7 @@ class Unit:
             if index == 0:
                 Neuron_class = InputNeuron
             else:
-                input_neurons = np.random.choice(self.neurons[:index], np.random.randint(low=1, high=index + 1))
+                input_neurons = np.random.choice(self.neurons[:index], np.random.randint(low=1, high=index + 1)).tolist()
                 if index == len(distances) - 1:
                     Neuron_class = OutputNeuron
 
@@ -63,11 +62,12 @@ class Unit:
             target_neurons = np.random.choice(self.neurons[index + 1:],
                                               np.random.randint(low=1, high=neuron_count - index))
             neuron.update_connections(target_neurons)
-
+        if hyper.verbose > 3:
+            print('    Finished Initialization')
         self.refactor_output()
         self.refactor_input()
 
-    @property
+
     def reproduce(self):
         """
         Produce a single variant copy
@@ -85,7 +85,7 @@ class Unit:
         new_unit = copy.deepcopy(self)
 
         # Kill old neurons
-        dying_indexes = rng.choice(indexes[1:-1], size=evo_utils.deter_size(rng, self.probabilities.neuron_del_percent,
+        dying_indexes = rng.choice(indexes[1:-1], size=evo_utils.deter_size(rng, hyper.neuron_del_percent,
                                                                             hyper.neuron_del_percent_variant, og_size),
                                    replace=False)
 
@@ -93,7 +93,7 @@ class Unit:
 
         # Produce new neurons
         mother_indexes = rng.choice(indexes[1:-1],
-                                    size=evo_utils.deter_size(rng, self.probabilities.neuron_produce_percent,
+                                    size=evo_utils.deter_size(rng, hyper.neuron_produce_percent,
                                                               hyper.neuron_produce_percent_variant, og_size),
                                     replace=False)
 
@@ -101,7 +101,7 @@ class Unit:
 
         # Update existing neurons with new weights
         update_index = rng.choice(np.arange(len(new_unit.neurons)),
-                                  size=evo_utils.deter_size(rng, self.probabilities.neruon_update_percent,
+                                  size=evo_utils.deter_size(rng, hyper.neuron_update_percent,
                                                             hyper.neuron_update_percent_variant,
                                                             len(new_unit.neurons)),
                                   replace=False)
@@ -135,44 +135,58 @@ class Unit:
         self.refactor_input()
 
     def refactor_output(self):
+        if hyper.verbose > 3:
+            print('        Refactoring Output')
         out = self.neurons[-1]
         out_size = evo_utils.product(hyper.output_shape)
         curr_size = out.input_count
-        delta_size = evo_utils.delta_size(curr_size, out_size, 1)
+        delta_size, multiplier = evo_utils.delta_size(curr_size, out_size)
+        out.output_aggregate_multiplier = multiplier
         rng = np.random.default_rng()
 
         if delta_size >= 0:
             # If need more connections:
+            if hyper.verbose > 3:
+                print(f'        Need {delta_size} More Connections, Having {curr_size}. ')
             input_neurons = rng.choice(self.neurons[1:-1], size=delta_size)
             out.update_input_neurons(input_neurons)
             for input_neuron in input_neurons:
                 input_neuron.update_connections([out])
         else:
-            # If wants less connectios
+            # If wants less connections
             no_del_count, del_index = evo_utils.no_del_inputs(delta_size, self)
             if curr_size - no_del_count + delta_size <= 0:
                 # Duplicate Code
                 # If can't have less connections
+                if hyper.verbose > 3:
+                    print(f'        Need {delta_size} More Connections, Having {curr_size}. ')
                 input_neurons = rng.choice(self.neurons[1:-1], size=delta_size)
                 out.update_input_neurons(input_neurons)
                 for input_neuron in input_neurons:
                     input_neuron.update_connections([out])
             else:
                 # If able to have less connections
+                if hyper.verbose > 3:
+                    print(f'        Need {-delta_size} Less Connections, Having {curr_size}. ')
                 del_index = sorted(rng.choice(del_index, size=-delta_size), reverse=True)
                 for i in del_index:
                     out.input_neurons[i].delete_connection(out)
                     out.del_input_i(i)
 
     def refactor_input(self):
+        if hyper.verbose > 3:
+            print('        Refactoring Input')
         rng = np.random.default_rng()
         input_neuron = self.neurons[0]
         in_size = evo_utils.product(hyper.input_shape)
         curr_size = input_neuron.connections.size
-        delta_size = evo_utils.delta_size(curr_size, in_size, 0)
+        delta_size, multiplier = evo_utils.delta_size(curr_size, in_size)
+        input_neuron.input_aggregate_multiplier = multiplier
 
         if delta_size >= 0:
             # If need more connections:
+            if hyper.verbose > 3:
+                print(f'        Need {delta_size} More Connections, Having {curr_size}. ')
             connection_neurons = rng.choice(self.neurons[1:-1], size=delta_size)
             input_neuron.update_connections(connection_neurons)
             for connection_neuron in connection_neurons:
@@ -183,12 +197,16 @@ class Unit:
             if curr_size - no_del_count + delta_size <= 0:
                 # Duplicate Again
                 # If can't have less connections:
+                if hyper.verbose > 3:
+                    print(f'        Need {delta_size} More Connections, Having {curr_size}. ')
                 connection_neurons = rng.choice(self.neurons[1:-1], size=delta_size)
                 input_neuron.update_connections(connection_neurons)
                 for connection_neuron in connection_neurons:
                     connection_neuron.update_input_neurons([input_neuron])
             else:
                 # If able to have less connections
+                if hyper.verbose > 3:
+                    print(f'        Need {-delta_size} Less Connections, Having {curr_size}. ')
                 del_index = sorted(rng.choice(del_index, size=-delta_size), reverse=True)
                 for i in del_index:
                     input_neuron.connections.target_neurons[i].del_input(input_neuron)
@@ -204,4 +222,4 @@ class Unit:
             (?) : the calculated result
         """
         self.neurons[0].output(inputs)
-        return self.neurons[len(self.neurons)].output_val
+        return self.neurons[len(self.neurons)-1].output_val

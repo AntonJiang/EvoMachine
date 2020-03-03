@@ -1,5 +1,6 @@
 from unit import Unit
 import numpy as np
+import hyper
 
 
 def vote(results):
@@ -35,12 +36,15 @@ class Population:
     """
 
     def __init__(self, population_size, population_variant_magnitude, kill_system):
+        self.population_size = population_size
         self.population_variant_magnitude = population_variant_magnitude
         self.kill_system = kill_system
         self.units = []
 
-        for _ in range(population_size):
-            unit = Unit([0.1, 0.1, 0.2], population_variant_magnitude)
+        for i in range(population_size):
+            if hyper.verbose > 2:
+                print(f'    Generating Unit {i}')
+            unit = Unit(population_variant_magnitude)
             unit.setup()
             self.units.append(unit)
 
@@ -54,7 +58,7 @@ class Population:
         """
         # Kill off units, using one data entry per killing
         for y, x in zip(labels, data):
-            self.kill([y], [x])
+            self.kill(np.array([y]), np.array([x]))
             self.produce()
 
     def kill(self, labels, data):
@@ -74,9 +78,9 @@ class Population:
         """
         Reproduce until population is filled again
         """
-        num_to_produce = len(self.units) - len(self.units)
-        produce_index = np.random.choice(self.units, size=num_to_produce, replace=True, p=None)
-        self.units.extend([self.units[index].reproduce for index in produce_index])
+        num_to_produce = self.population_size - len(self.units)
+        producing_units = np.random.default_rng().choice(self.units, size=num_to_produce, replace=True)
+        self.units.extend([unit.reproduce() for unit in producing_units])
 
     def predict(self, data):
         """

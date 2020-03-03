@@ -9,7 +9,7 @@ def _flip(num):
     return 1
 
 
-def gen_new_weights(size, reference_weight=hyper.connection_reference_weight):
+def gen_new_weights(size, reference_weight=None):
     """
     Generate Weights based on Sample Weights
 
@@ -20,8 +20,13 @@ def gen_new_weights(size, reference_weight=hyper.connection_reference_weight):
     Return:
         (list{float}) : new weights of size
     """
+    if size == 0:
+        return []
+
+    if reference_weight is None or len(reference_weight) == 0:
+        reference_weight = [hyper.connection_reference_weight]
     mean = np.mean(reference_weight)
-    new_weights = np.random.default_rng().normal(mean, np.std(reference_weight), size)
+    new_weights = np.random.default_rng().normal(mean, np.std(reference_weight), size=size)
     return new_weights
 
 
@@ -52,7 +57,10 @@ class Connections:
             self.functions = functions
 
         if states is None:
-            self.states = np.ones(len(target_neurons))
+            if self.size == 0:
+                self.states = []
+            else:
+                self.states = np.ones(len(target_neurons))
         else:
             self.states = states
 

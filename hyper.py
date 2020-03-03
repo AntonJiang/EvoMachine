@@ -10,9 +10,14 @@ output_shape = None
 
 input_layer_drop_rate = 0.1
 
-mean_neuron_num = 30
+mean_neuron_num = 20
 
 min_survive_percent = 0.3
+
+neuron_del_percent = 0.1
+neuron_produce_percent = 0.1
+neuron_update_percent = 0.2
+
 
 neuron_produce_percent_variant = 0.03
 
@@ -36,11 +41,9 @@ connection_function_percent = 0.05
 
 connection_function_percent_variant = 0.01
 
-input_aggregate_multiplier = 1
-
-output_aggregate_multiplier = 1
-
 connection_reference_weight = 10
+
+verbose = 10
 
 
 def output_activation(x):

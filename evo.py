@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-
 from evo_utils import KillSystem
 from population import Population
 import hyper
@@ -9,14 +8,22 @@ np.seterr(all='raise')
 
 
 def main():
+    print("Starting Evolution Machine")
     train_data = pd.read_csv("data/random-linear-regression/train.csv")
+    num_population = 1
+    num_unit = 30
+    meta = 10.0
+    hyper.verbose = 10
 
-    population = [100, 10.0]
-    populations = [population for _ in range(10)]
+    population = [num_unit, meta]
+    populations = [population for _ in range(num_population)]
     label = np.array(train_data['y'])
     data = np.array(train_data['x'])
 
+
     model = EvoMachine(populations, (1, 1), (1, 1))
+    model.train(np.array(label), np.array(data))
+    print(model.predict([10, 10, 10, 10, 10]))
 
 
 def vote(results):
@@ -47,13 +54,19 @@ class EvoMachine(object):
     """
 
     def __init__(self, populations, input_shape, output_shape):
+        if hyper.verbose > 0:
+            print(f'Generating Population {len(populations)=}')
         self.populations = []
         # TODOS: Set custom min_survice_percent
         hyper.input_shape = input_shape
         hyper.output_shape = output_shape
-        for population in populations:
+        for index, population in enumerate(populations):
+            if hyper.verbose > 1:
+                print(f'Generating Population {index} with {population[0]} units')
             pop = Population(population[0], population[1], KillSystem(hyper.min_survive_percent))
             self.populations.append(pop)
+        if hyper.verbose > 0:
+            print('Finished Generating Populations.')
 
     def train(self, label, data):
         """
@@ -64,8 +77,12 @@ class EvoMachine(object):
         data (list{?}) : list of input data
         Return
         """
+        if hyper.verbose > 0:
+            print(f'Starting Training {len(data)=} {len(label)=}')
         assert len(label) == len(data)
-        for population in self.populations:
+        for index, population in enumerate(self.populations):
+            if hyper.verbose > 1:
+                print(f'Training population {index}')
             population.train(label, data)
 
     def predict(self, data):

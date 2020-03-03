@@ -8,6 +8,13 @@ import hyper
 # 	def __init__(self, arg):
 # 		self.arg = arg
 # 		
+def display_unit(unit):
+    print(f'---------- Unit Graph ----------')
+    print(f' {unit=} {unit.meta_variant_magnitude=}')
+
+
+
+
 
 def no_del_outputs(delta, unit):
     input_neuron = unit.neurons[-1]
@@ -42,16 +49,12 @@ def no_del_inputs(delta, unit):
     return no_del_count, del_index
 
 
-def delta_size(curr_size, want_size, flag):
+def delta_size(curr_size, want_size):
     multiplier = round(1.0 * curr_size / want_size)
     if multiplier <= 0:
         multiplier = 1
-    if flag == 1:
-        hyper.output_aggregate_multiplier = multiplier
-    if flag == 0:
-        hyper.input_aggregate_multiplier = multiplier
     delta = want_size * multiplier - curr_size
-    return delta
+    return delta, multiplier
 
 
 def product(lst):
@@ -67,6 +70,7 @@ def deter_size(rng, mean, scale, og_size):
         return 1
     if size == og_size:
         return og_size - 1
+    return size
 
 
 def aggregate(inputs, multiplier):
@@ -93,6 +97,8 @@ def random_get_functions(size):
     Return
         (list{Func}) : a list of random activation functions
     """
+    if size == 0:
+        return []
     return np.random.choice(single_function, size=size)
 
 
@@ -111,16 +117,20 @@ def _binary_step(x, a=1):
         return a
 
 
-def _linear_function(x, a=1, _coe=0):
+def _linear_function(x, a=1.0, _coe=0.0):
     return a * x + _coe
 
 
 def _sigmoid_function(x, a=None):
+    if x > 100:
+        x = 100
     z = (1 / (1 + np.exp(-x)))
     return z
 
 
 def _tanh_function(x, a=None):
+    if x > 100:
+        x = 100
     z = (2 / (1 + np.exp(-2 * x))) - 1
     return z
 
@@ -140,6 +150,9 @@ def _leaky_relu_function(x, a=0.01):
 
 
 def _elu_function(x, a):
+    # Cap at 1000
+    if x > 100:
+        x = 100
     if x < 0:
         return a * (np.exp(x) - 1)
     else:
@@ -147,31 +160,36 @@ def _elu_function(x, a):
 
 
 def _swish_function(x, a=None):
+    if x == 0:
+        return -1
+    if x > 100:
+        x = 100
     return x / (1 - np.exp(-x))
 
 
 def _softmax_function(x, a=None):
+    if x > 100:
+        x = 100
     z = np.exp(x)
     z_ = z / z.sum()
     return z_
 
 
-def _polynomial_2nd_function(x, a=None, b=None):
+def _polynomial_2nd_function(x, a=1.0, b=1.0):
     return a * x * x + _linear_function(x, b)
 
 
-def _polynomial_3rd_function(x, a=None, b=None, c=None):
+def _polynomial_3rd_function(x, a=1.0, b=1.0, c=1.0):
     return a * x * x * x + _polynomial_2nd_function(x, b, c)
 
 
 single_activation = [_binary_step, _linear_function, _sigmoid_function, _tanh_function,
-                     _relu_function, _leaky_relu_function, _elu_function, _swish_function,
-                     _softmax_function]
+                     _relu_function, _leaky_relu_function, _elu_function, _swish_function]
 
-pool_activation = [lambda x: func(x.sum()) for func in single_activation]
+pool_activation = [lambda x: func(sum(x)) for func in single_activation]
 
 single_function = [_linear_function, _sigmoid_function, _leaky_relu_function, _swish_function,
-                   _softmax_function, _polynomial_2nd_function, _polynomial_3rd_function]
+                   _polynomial_2nd_function, _polynomial_3rd_function]
 
 
 def mae(predictions, targets):
@@ -206,12 +224,16 @@ class KillSystem:
         """
         size = len(units)
         max_del_size = (1 - self.min_survive) * size
-        # TODO: change this:
-        del_size = np.random.default_rng().normal(max_del_size / 2, max_del_size / 5)
-        assert (max_del_size == size)
+        del_size = int(np.random.default_rng().normal(max_del_size/3, max_del_size/5))
+
+        assert del_size < size and max_del_size < size
+
         outputs = [unit.predict(input_val) for unit in units]
-        loss = [mae(output, true_output) for output in outputs]
-        loss, index = sorted(zip(loss, np.arange(size)), reverse=True)
-        p = np.linalg.norm(np.linspace(del_size, 0, num=del_size))
-        index = np.random.choice(index, replace=False, size=del_size, p=p)
+        loss = np.array([mae(output, true_output) for output in outputs])
+        index = np.argsort([ -loss, np.arange(size)], axis=1)[0]
+        if hyper.verbose > 1:
+            print(f'Max Loss {loss[index[0]]}, Min Loss {loss[index[-1]]}, Median Loss {loss[index[int(size/2)]]}')
+        p = np.linspace(1, 0, num=size)
+        p = p/np.linalg.norm(p, ord=1)
+        index = np.random.default_rng().choice(index, replace=False, size=del_size, p=p)
         return index

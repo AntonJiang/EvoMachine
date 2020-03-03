@@ -129,7 +129,7 @@ class Neuron:
             return
 
         functioned_output = [func(self.activation(self.temp_input)) for func in self.connections.functions]
-        outputs = self.connections.states.multiply(functioned_output).multiply(self.connections.weights())
+        outputs = self.connections.states * functioned_output * self.connections.weights
 
         for neuron, output in zip(self.connections.target_neurons, outputs):
             neuron.output(output)
@@ -151,12 +151,13 @@ class InputNeuron(Neuron):
         super().__init__(**kwargs)
         self.input_count = 1
         self.activation = None
+        self.input_aggregate_multiplier = None
 
     def output(self, inputs):
-        inputs = evo_utils.aggregate(inputs.flatten(), hyper.input_aggregate_multiplier)
+        inputs = np.tile(np.array(inputs).ravel(), self.input_aggregate_multiplier)
 
         functioned_output = [func(output) for output, func in zip(inputs, self.connections.functions)]
-        outputs = self.connections.states.multiply(functioned_output).multiply(self.connections.weights())
+        outputs = self.connections.states * functioned_output * self.connections.weights
 
         for neuron, output in zip(self.connections.target_neurons, outputs):
             neuron.output(output)
@@ -176,6 +177,7 @@ class OutputNeuron(Neuron):
         super().__init__(**kwargs)
         self.output_val = None
         self.activation = hyper.output_activation
+        self.output_aggregate_multiplier = None
 
     def output(self, single_input):
         self.temp_input.append(single_input)
@@ -183,7 +185,7 @@ class OutputNeuron(Neuron):
             return
 
         self.output_val = np.reshape(
-            self.activation(evo_utils.aggregate(self.temp_input,
-                                                hyper.output_aggregate_multiplier)), hyper.output_shape)
+            self.activation(evo_utils.aggregate(np.array(self.temp_input),
+                                                self.output_aggregate_multiplier)), hyper.output_shape)
 
         self.temp_input = []
