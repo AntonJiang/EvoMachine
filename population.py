@@ -79,7 +79,7 @@ class Population:
         Reproduce until population is filled again
         """
         num_to_produce = self.population_size - len(self.units)
-        producing_units = np.random.default_rng().choice(self.units, size=num_to_produce, replace=True)
+        producing_units = hyper.rng.choice(self.units, size=num_to_produce, replace=True)
         self.units.extend([unit.reproduce() for unit in producing_units])
 
     def predict(self, data):
@@ -91,5 +91,5 @@ class Population:
         Return:
             (list{?}) : list of predicted values
         """
-        results = [vote([unit.predict(entry) for unit in self.units]) for entry in data]
+        results = [vote([unit.predict(index, entry) for index, unit in enumerate(self.units)]) for entry in data]
         return results

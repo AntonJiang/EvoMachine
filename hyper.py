@@ -1,3 +1,4 @@
+import numpy
 """
 connection_produce_percent (float) : the probability for one connection to produce
 connection_del_percent (float) : the probability for one connection to disappear
@@ -45,6 +46,8 @@ connection_reference_weight = 10
 
 verbose = 10
 
+
+rng = numpy.random.default_rng(100)
 
 def output_activation(x):
     return x

@@ -9,7 +9,7 @@ def _flip(num):
     return 1
 
 
-def gen_new_weights(size, reference_weight=None):
+def _gen_new_weights(size, reference_weight=None):
     """
     Generate Weights based on Sample Weights
 
@@ -26,7 +26,7 @@ def gen_new_weights(size, reference_weight=None):
     if reference_weight is None or len(reference_weight) == 0:
         reference_weight = [hyper.connection_reference_weight]
     mean = np.mean(reference_weight)
-    new_weights = np.random.default_rng().normal(mean, np.std(reference_weight), size=size)
+    new_weights = hyper.rng.normal(mean, np.std(reference_weight), size=size)
     return new_weights
 
 
@@ -43,36 +43,42 @@ class Connections:
     """
 
     def __init__(self, target_neurons, weights=None, functions=None, states=None):
-        self.target_neurons = target_neurons
         self.size = len(target_neurons)
 
         if weights is None:
-            self.weights = gen_new_weights(self.size)
-        else:
-            self.weights = weights
+            weights = _gen_new_weights(self.size)
 
         if functions is None:
-            self.functions = evo_utils.random_get_functions(self.size)
-        else:
-            self.functions = functions
+            functions = evo_utils.random_get_functions(self.size)
 
         if states is None:
-            if self.size == 0:
-                self.states = []
-            else:
-                self.states = np.ones(len(target_neurons))
-        else:
-            self.states = states
+            states = np.ones(self.size)
 
-    def delete(self, index):
+        self.attr = np.array([target_neurons, weights, states, functions])
+
+    def get_functions(self):
+        return self.attr[3]
+
+    def get_states(self):
+        return self.attr[2]
+
+    def get_weights(self):
+        return self.attr[1]
+
+    def get_target_neurons(self):
+        return self.attr[0]
+
+    def delete(self, neuron):
+
+        self.size -= 1
+        self.attr = np.delete(self.attr, obj=np.argwhere(self.attr[0] == neuron)[0][0], axis=1)
+
+    def delete_i(self, index):
         """
         Delete the connection at the giving index if possible
         """
         self.size -= 1
-        del self.weights[index]
-        del self.states[index]
-        del self.functions[index]
-        del self.target_neurons[index]
+        self.attr = np.delete(self.attr, obj=index, axis=1)
 
     def add(self, neurons):
         """
@@ -82,59 +88,61 @@ class Connections:
             neurons (Neurons) : new target neuron for the connection to be added
         """
         addition_size = len(neurons)
-        self.weights = np.hstack((self.weights, gen_new_weights(addition_size, self.weights)))
+        self.attr = np.concatenate((self.attr, np.array([neurons, _gen_new_weights(addition_size, self.get_weights()),
+                                                np.ones(addition_size),
+                                                         evo_utils.random_get_functions(addition_size)])),
+                                   axis=1)
         self.size += addition_size
-        self.states = np.hstack((self.states, np.ones(addition_size)))
-        self.functions = evo_utils.random_get_functions(self.size)
-        self.target_neurons.extend(neurons)
 
-    def update(self, meta_variant, neuron, neurons):
+    def update(self, meta_variant, neurons, self_neuron):
         """
         Update the connection in some degree, delete some connection, add some more connections
 
         Args:
             meta_variant : the meta variant
-            neuron : the self neuron which is updating
             neurons : list of neurons with chance to connect with
+            self_neuron : the self neuron
         """
-        rng = np.random.default_rng()
 
         # Kill some connections
-        death_index = rng.choice(np.arange(self.size),
-                                 size=evo_utils.deter_size(rng, hyper.connection_life_percent / 2,
-                                                           hyper.connection_life_percent_variant / 2,
-                                                           self.size),
-                                 replace=False)
-        for i in sorted(death_index, reverse=True):
-            self.delete(i)
-            self.target_neurons[i].del_input(neuron)
+        if self.size > 1:
+            death_index = hyper.rng.choice(np.arange(self.size),
+                                     size=evo_utils.deter_size(hyper.connection_life_percent / 2,
+                                                               hyper.connection_life_percent_variant / 2, self.size),
+                                     replace=False)
+            if len(death_index) == self.size:
+                death_index = death_index[0]
 
-        update_index = rng.choice(np.arange(self.size),
-                                  size=evo_utils.deter_size(rng, hyper.connection_update_percent,
-                                                            hyper.connection_update_percent_variant,
-                                                            self.size),
-                                  replace=False)
+            for i in sorted(death_index, reverse=True):
+                self.get_target_neurons()[i].del_input(self_neuron)
+                self.delete_i(i)
 
-        for i in update_index:
-            self._update(i, meta_variant)
+            update_index = hyper.rng.choice(np.arange(self.size),
+                                      size=evo_utils.deter_size(hyper.connection_update_percent,
+                                                                hyper.connection_update_percent_variant, self.size),
+                                      replace=False)
 
-        birth_neurons = rng.choice(neurons, size=evo_utils.deter_size(rng, hyper.connection_life_percent / 2,
+            for i in update_index:
+                self._update(i, meta_variant)
+
+        birth_neurons = hyper.rng.choice(neurons, size=evo_utils.deter_size(hyper.connection_life_percent / 2,
                                                                       hyper.connection_life_percent_variant / 2,
                                                                       self.size),
                                    replace=False)
 
-        birth_neurons = [neuron for neuron in birth_neurons if neuron.distance < neuron.distance]
+        birth_neurons = [neuron for neuron in birth_neurons if self_neuron.distance < neuron.distance]
         self.add(birth_neurons)
+        [neuron.update_input_neuron(self_neuron) for neuron in birth_neurons]
 
     def _update(self, index, meta_variant):
         """
         Update at the given index
         """
-        rng = np.random.default_rng()
-        self.weights[index] = rng.normal(self.weights[index], self.weights[index] / 3 * (meta_variant / 10))
+        self.get_weights()[index] = hyper.rng.normal(self.get_weights()[index],
+                                               self.get_weights()[index] / 3 * (meta_variant / 10))
         # Able to optimize this:
-        if rng.random() < hyper.connection_state_flip_percent:
-            self.states[index] = _flip(self.states[index])
+        if hyper.rng.random() < hyper.connection_state_flip_percent:
+            self.get_states()[index] = _flip(self.get_states()[index])
 
-        if rng.random() < hyper.connection_function_percent:
-            self.functions[index] = evo_utils.random_get_functions(1)
+        if hyper.rng.random() < hyper.connection_function_percent:
+            self.get_functions()[index] = evo_utils.random_get_functions(1)[0]

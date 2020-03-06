@@ -11,7 +11,7 @@ def main():
     print("Starting Evolution Machine")
     train_data = pd.read_csv("data/random-linear-regression/train.csv")
     num_population = 1
-    num_unit = 30
+    num_unit = 10
     meta = 10.0
     hyper.verbose = 10
 
@@ -19,7 +19,6 @@ def main():
     populations = [population for _ in range(num_population)]
     label = np.array(train_data['y'])
     data = np.array(train_data['x'])
-
 
     model = EvoMachine(populations, (1, 1), (1, 1))
     model.train(np.array(label), np.array(data))

@@ -7,13 +7,45 @@ import hyper
 # 	"""docstring for Pickle"""
 # 	def __init__(self, arg):
 # 		self.arg = arg
-# 		
+#
+
+def display_neuron(neuron):
+    print(f'**** Neuron Graph ****')
+    print(f'Target Neurons:')
+    for target_neuron in neuron.connections.get_target_neurons():
+        print(f'{target_neuron.distance}')
+    print('Input Neurons')
+    for input_neuron in neuron.input_neurons:
+        print(f'{input_neuron.distance}')
+
 def display_unit(unit):
     print(f'---------- Unit Graph ----------')
     print(f' {unit=} {unit.meta_variant_magnitude=}')
+    connection_dict = dict()
+
+    for neuron in unit.neurons:
+        # Check for broken out connection
+        distance = neuron.distance
+        temp_dict = dict(input=[], output=[])
+        # Print all outputs
+        for target_neuron in neuron.connections.get_target_neurons():
+            temp_dict['output'].append(_tuple(target_neuron))
+
+        # Use input to verify outputs and print input if input no outputs
+        for input_neuron in neuron.input_neurons:
+            if _tuple(neuron) in connection_dict[str(input_neuron.distance)]['output']:
+                connection_dict[str(input_neuron.distance)]['output'].remove(_tuple(neuron))
+            else:
+                temp_dict['input'].append(_tuple(input_neuron))
+
+        connection_dict[str(distance)] = temp_dict
+    for key, item in connection_dict.items():
+        print(f'{key} : {item}')
+    print(f'---------- Finished -----------')
 
 
-
+def _tuple(neuron):
+    return neuron.distance, neuron
 
 
 def no_del_outputs(delta, unit):
@@ -41,7 +73,7 @@ def no_del_inputs(delta, unit):
     no_del_count = 0
     del_index = []
     for index, input_neuron in enumerate(input_neurons):
-        if input_neuron.connections.target_neurons.count(out) == input_neuron.connections.size:
+        if len(np.unqiue(input_neuron.connections.get_target_neurons())) == 1:
             no_del_count += 1
         else:
             del_index.append(index)
@@ -64,8 +96,8 @@ def product(lst):
     return p
 
 
-def deter_size(rng, mean, scale, og_size):
-    size = int(rng.normal(mean, scale) * og_size)
+def deter_size(mean, scale, og_size):
+    size = int(hyper.rng.normal(mean, scale) * og_size)
     if size == 0:
         return 1
     if size == og_size:
@@ -85,7 +117,7 @@ def random_get():
     Return
         (list{Func}) : a list of random activation functions
     """
-    return np.random.choice(pool_activation)
+    return hyper.rng.choice(pool_activation)
 
 
 def random_get_functions(size):
@@ -99,7 +131,7 @@ def random_get_functions(size):
     """
     if size == 0:
         return []
-    return np.random.choice(single_function, size=size)
+    return hyper.rng.choice(single_function, size=size)
 
 
 """
@@ -224,16 +256,16 @@ class KillSystem:
         """
         size = len(units)
         max_del_size = (1 - self.min_survive) * size
-        del_size = int(np.random.default_rng().normal(max_del_size/3, max_del_size/5))
+        del_size = int(hyper.rng.normal(max_del_size / 3, max_del_size / 5))
 
         assert del_size < size and max_del_size < size
 
-        outputs = [unit.predict(input_val) for unit in units]
+        outputs = [unit.predict(index, input_val) for index, unit in enumerate(units)]
         loss = np.array([mae(output, true_output) for output in outputs])
-        index = np.argsort([ -loss, np.arange(size)], axis=1)[0]
+        index = np.argsort([-loss, np.arange(size)], axis=1)[0]
         if hyper.verbose > 1:
-            print(f'Max Loss {loss[index[0]]}, Min Loss {loss[index[-1]]}, Median Loss {loss[index[int(size/2)]]}')
+            print(f'Max Loss {loss[index[0]]}, Min Loss {loss[index[-1]]}, Median Loss {loss[index[int(size / 2)]]}')
         p = np.linspace(1, 0, num=size)
-        p = p/np.linalg.norm(p, ord=1)
-        index = np.random.default_rng().choice(index, replace=False, size=del_size, p=p)
+        p = p / np.linalg.norm(p, ord=1)
+        index = hyper.rng.choice(index, replace=False, size=del_size, p=p)
         return index
